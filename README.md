@@ -111,7 +111,6 @@ Ein `merge` wäre der falsche Griff — er zöge die ganze Kit-Geschichte herein
 | Einstellungen | TOML, von Oberfläche und CLI gemeinsam benutzt; hell/dunkel/System, Akzentfarbe |
 | Prüfung | Feldgenaue Fehler aus Rust — in der Oberfläche am Feld, in der CLI als `error.fields` |
 | Ausliefern | `.app` + `.dmg` (auch universal), `.deb` + `.AppImage`, CLI-Tarball |
-| CI | GitHub Actions auf macOS **und** Linux, Release-Entwurf auf Tag |
 | Qualität | rustfmt, Clippy, Biome, `tsc`, `cargo deny`, `npm audit` — Warnungen sind Fehler |
 | Tests | Fachlogik, Schichtwächter, CLI-Schnappschüsse, IPC ohne Fenster, Oberfläche mit `mockIPC` |
 
@@ -166,8 +165,7 @@ just package-cli              # die Kommandozeile als Tarball
 ```
 
 Ergebnisse unter `target/release/bundle/` bzw. `dist/`. Signieren und
-Notarisieren: [docs/RELEASE.md](docs/RELEASE.md). Ein Tag `v*` baut alles in
-der CI und legt einen Release-Entwurf an.
+Notarisieren: [docs/RELEASE.md](docs/RELEASE.md).
 
 ---
 

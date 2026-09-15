@@ -15,13 +15,6 @@ just package-cli              # die Kommandozeile als Tarball
 
 Universal-Bündel landen unter `target/universal-apple-darwin/release/bundle/`.
 
-Oder über die CI: ein Tag `v*` baut alles und legt einen **Release-Entwurf**
-an. Veröffentlicht wird von Hand, nach einem Blick auf die Dateien.
-
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
-
 Die Fassung steht an genau einer Stelle: `version` unter `[workspace.package]`
 in der obersten `Cargo.toml`. Tauri liest sie aus `crates/desktop/Cargo.toml`,
 das sie erbt. `package.json` hat eine eigene Nummer, die niemand liest.
@@ -64,8 +57,6 @@ Sicherheit → Automation** erlauben, oder ohne Gestaltung bauen:
 CI=true npm run tauri build
 ```
 
-In GitHub Actions ist `CI` ohnehin gesetzt.
-
 ### Signieren und notarisieren
 
 Ohne Einstellungen signiert Tauri ad hoc. Das genügt auf dem eigenen Rechner.
@@ -86,20 +77,7 @@ export APPLE_TEAM_ID="TEAMID"
 just bundle-macos-universal
 ```
 
-In der CI kommen sie aus den Repository-Secrets, dazu das Zertifikat selbst:
-
-```yaml
-# .github/workflows/release.yml, beim Schritt tauri-action unter env:
-APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}            # .p12, base64
-APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-APPLE_ID: ${{ secrets.APPLE_ID }}
-APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-```
-
-Die Zeilen stehen dort bewusst **nicht** — ein Kit ohne Zertifikat soll ohne
-Fehlschlag durchlaufen.
+Das Zertifikat muss dafür im Schlüsselbund liegen.
 
 ---
 
@@ -114,12 +92,11 @@ sudo apt install libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
 ```
 
 Fehlen sie, bricht der Bau mit Meldungen über fehlende `.pc`-Dateien ab
-(`webkit2gtk-4.1 was not found`), nicht mit einem Rust-Fehler. Die Liste
-steht auch in `.github/workflows/check.yml`.
+(`webkit2gtk-4.1 was not found`), nicht mit einem Rust-Fehler.
 
 **Gebaut wird auf der ältesten Distribution, die unterstützt werden soll.**
 Ein Binary, das gegen eine neue glibc gebaut ist, startet auf einer älteren
-nicht. Die Release-CI benutzt deshalb `ubuntu-22.04`.
+nicht. Für Ubuntu heißt das: auf 22.04 bauen, nicht auf der neuesten Fassung.
 
 ### Auf dem Zielrechner
 
@@ -149,7 +126,7 @@ Start — nur unter `#[cfg(target_os = "linux")]`, und nur dort.
 * **Kein Auto-Update.** `tauri-plugin-updater` braucht einen
   Signaturschlüssel und einen Ort, an dem die Update-Beschreibung liegt. Gehört
   nicht in einen Startpunkt.
-* **Kein Windows.** Nachrüstbar: ein Runner in der CI, `"msi"`/`"nsis"` in
+* **Kein Windows.** Nachrüstbar: auf Windows bauen, `"msi"`/`"nsis"` in
   `bundle.targets`, `icon.ico` über `just icons` wieder erzeugen lassen, und in
   `crates/desktop/src/main.rs`
   `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` —

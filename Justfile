@@ -49,7 +49,7 @@ bindings:
 
 # --- Prüfen ----------------------------------------------------------------
 
-# Der Torwächter. Läuft genauso in der CI. Muss grün sein, bevor etwas committet wird.
+# Der Torwächter. Muss grün sein, bevor etwas committet wird.
 check: fmt-check lint test deny
     @echo ""
     @echo "Alles grün."

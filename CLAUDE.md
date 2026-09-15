@@ -334,8 +334,7 @@ just check
 ```
 
 Das ist `cargo fmt --check`, Clippy, Biome, `tsc`, alle Rust- und
-Vitest-Tests, `cargo deny` und `npm audit` — genau das, was auch die CI
-ausführt. Warnungen sind Fehler.
+Vitest-Tests, `cargo deny` und `npm audit`. Warnungen sind Fehler.
 
 ---
 
