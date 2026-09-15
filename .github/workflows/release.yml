@@ -1,0 +1,67 @@
+# Baut die Auslieferungsdateien, sobald ein Tag v* geschoben wird.
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Ergebnis am Release:
+#   macOS   Starter.app als .dmg (universal: Apple Silicon + Intel)
+#   Linux   .deb und .AppImage
+#   beide   die Kommandozeile als Tarball
+#
+# Zum Signieren und Notarisieren siehe docs/RELEASE.md — ohne Geheimnisse im
+# Repository bleibt das macOS-Bündel ad-hoc signiert und lässt sich nur mit
+# Rechtsklick → Öffnen starten.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            args: --target universal-apple-darwin
+          - os: ubuntu-22.04    # ältere glibc → läuft auf mehr Distributionen
+            args: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Systembibliotheken (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tauriScript: npm run tauri --
+          args: ${{ matrix.args }}
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseDraft: true
+
+      - run: ./scripts/package-cli.sh
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          files: dist/*.tar.gz

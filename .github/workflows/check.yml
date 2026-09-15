@@ -1,0 +1,70 @@
+# Derselbe Torwächter wie `just check`, auf beiden Zielsystemen.
+#
+# Linux braucht die Systembibliotheken, gegen die Tauri bindet (WebKitGTK).
+# macOS bringt WebKit mit — deshalb steht die Liste nur im Linux-Schritt.
+name: check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15        # Apple Silicon
+          - os: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # Ohne diese Pakete scheitert der Bau unter Linux mit Meldungen über
+      # fehlende .pc-Dateien, nicht mit einem Rust-Fehler.
+      - name: Systembibliotheken (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      # Die Fassung steht in rust-toolchain.toml; rustup liest sie selbst.
+      - name: Rust
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: npm ci
+
+      - run: cargo fmt --all --check
+      - run: npm run lint:ui
+      - run: npx tsc --noEmit
+
+      # tauri::generate_context! bettet ui/dist ein — ohne den Bau der
+      # Oberfläche kompiliert die Desktop-Kiste nicht.
+      - run: npm run build:ui
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - run: npm run test:ui
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: EmbarkStudios/cargo-deny-action@v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm audit --omit=dev --audit-level=high
