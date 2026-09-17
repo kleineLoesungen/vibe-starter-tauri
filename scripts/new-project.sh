@@ -87,15 +87,19 @@ USAGE
         # Der Verweis auf das Schwester-Kit wird vorher geparkt und am Ende
         # zurückgestellt — der Name eines fremden Repositorys bleibt, wie er ist.
         #
+        # Die Bündelkennung steht ganz vorn und nimmt den Kurznamen mit
+        # Bindestrichen: Tauri erlaubt dort nur Buchstaben, Ziffern, "-" und
+        # ".", ein Unterstrich bricht `tauri build` ab.
+        #
         # Umweg über eine Zwischendatei statt `sed -i`: BSD-sed (macOS) verlangt
         # dort ein Argument, GNU-sed (Linux) verbietet es.
         LC_ALL=C sed \
             -e "s/vibe-starter-desktop/${park}/g" \
+            -e "s/de\.kleineloesungen\.starter/de.example.${slug}/g" \
             -e "s/STARTER_/${upper}_/g" \
             -e "s/starter_/${underscore}_/g" \
             -e "s/vibe-starter-tauri/${slug}/g" \
             -e "s/starter-/${slug}-/g" \
-            -e "s/de\.kleineloesungen\.starter/de.example.${underscore}/g" \
             -e "s/Starter/${display}/g" \
             -e "s/starter/${slug}/g" \
             -e "s/${park}/vibe-starter-desktop/g" \

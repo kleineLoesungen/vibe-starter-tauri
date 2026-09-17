@@ -210,6 +210,26 @@ fn csp_laesst_inline_stile_von_diagrammen_zu() {
     }
 }
 
+#[test]
+fn buendelkennung_ist_gueltig() {
+    // Tauri und macOS erlauben nur Buchstaben, Ziffern, "-" und ".". Ein
+    // Unterstrich — etwa aus einem Kurznamen mit Bindestrich — fällt sonst
+    // erst bei `tauri build` auf.
+    let conf: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+    let id = conf["identifier"]
+        .as_str()
+        .expect("identifier in tauri.conf.json");
+
+    assert!(
+        id.split('.').count() >= 2
+            && id.split('.').all(|part| !part.is_empty())
+            && id
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.'),
+        "ungültige Bündelkennung {id:?} — nur A–Z, a–z, 0–9, \"-\" und \".\""
+    );
+}
+
 // --- Befehlsliste Rust ↔ TypeScript ---------------------------------------
 
 #[test]
