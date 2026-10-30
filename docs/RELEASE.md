@@ -66,10 +66,26 @@ CI=true npm run tauri build
 ### Signieren und notarisieren
 
 Ohne Einstellungen signiert Tauri ad hoc. Das genügt auf dem eigenen Rechner.
-Auf einem fremden meldet Gatekeeper „beschädigt" oder „nicht verifizierter
-Entwickler" — nicht weil etwas kaputt ist, sondern weil die Signatur fehlt.
-Übergangsweise: Rechtsklick → Öffnen, oder
-`xattr -dr com.apple.quarantine /Applications/Starter.app`.
+Sobald das Bündel aber durchs Netz gegangen ist — Release, AirDrop, Anhang —,
+hängt eine Quarantäne-Markierung daran, und Gatekeeper verweigert mit
+„beschädigt" oder „kann nicht auf Schadsoftware geprüft werden". **Nichts ist
+kaputt; es fehlt die Signatur einer Apple-Developer-ID.**
+
+Für den eigenen Rechner gibt es zwei Wege:
+
+1. **Einmal doppelklicken** (wird blockiert), dann
+   **Systemeinstellungen → Datenschutz & Sicherheit**, nach unten scrollen,
+   **Trotzdem öffnen**. Der sanktionierte Weg.
+2. **Markierung entfernen**, wenn sich das Abbild gar nicht erst einhängt:
+   ```bash
+   xattr -dr com.apple.quarantine ~/Downloads/Starter_<version>_universal.dmg
+   ```
+
+Der ältere Rat „Rechtsklick → Öffnen" **funktioniert nicht mehr**; Apple hat
+diesen Weg entfernt.
+
+Wer ohnehin den Quelltext hat, umgeht das Ganze: Ein lokal gebautes Bündel
+(`just bundle`) trägt keine Quarantäne-Markierung und öffnet sich sofort.
 
 Für die Weitergabe braucht es eine Apple-Developer-ID (kostenpflichtig).
 Tauri übernimmt Signieren **und** Notarisieren, wenn diese Umgebungsvariablen
