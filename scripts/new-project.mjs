@@ -132,9 +132,17 @@ if (spawnSync("cargo", ["fmt", "--all"], still).status === 0) {
   console.log("         sonst meldet 'just check' Formatierungsunterschiede.");
 }
 
-// package-lock.json trägt den Namen aus package.json mit.
+// package-lock.json trägt den Namen aus package.json mit, und Biome räumt
+// Zeilen auf, die durch den neuen Namen über die Formatgrenze gewachsen
+// sind — dasselbe Anliegen wie `cargo fmt` oben.
+//
+// Beim üblichen Weg (klonen, umbenennen, dann erst `just setup`) gibt es
+// node_modules noch nicht. Dafür stehen die Kistennamen in
+// `scripts/tasks.mjs` in kurzen Konstanten statt mitten in langen Zeilen:
+// Dann ist nach dem Umbenennen nichts umzubrechen.
 if (existsSync(path.join(ROOT, "node_modules"))) {
   spawnSync("npm", ["install", "--package-lock-only"], { ...still, shell: true });
+  spawnSync("npx", ["biome", "check", "--write"], { ...still, shell: true });
 }
 
 console.log("\nWeiter:");

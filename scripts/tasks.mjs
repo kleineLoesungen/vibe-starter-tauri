@@ -39,6 +39,15 @@ function run(cmd, args, env = {}) {
   }
 }
 
+// Die Kistennamen stehen hier als Konstanten, nicht in jeder Zeile.
+// Das ist nicht Kosmetik: `scripts/new-project.mjs` ersetzt „starter"
+// überall durch den neuen Namen. Steckt der Name mitten in einer langen
+// Zeile, wächst die beim Umbenennen über die Formatgrenze von Biome — und
+// ein frisches Projekt meldet beim allerersten `just check` einen
+// Formatfehler. Kurze Zeilen hier können das nicht.
+const CLI = "starter-cli";
+const DESKTOP = "starter-desktop";
+
 // Das Wegwerfverzeichnis. Absolute Pfade, weil `tauri dev` die Anwendung aus
 // crates/desktop heraus startet — ein relativer Pfad landete dort.
 const sandbox = {
@@ -49,10 +58,10 @@ const sandbox = {
 const aufgaben = {
   "dev-sandbox": () => run("npm", ["run", "tauri", "dev"], sandbox),
 
-  sandbox: (args) => run("cargo", ["run", "-q", "-p", "starter-cli", "--", ...args], sandbox),
+  sandbox: (args) => run("cargo", ["run", "-q", "-p", CLI, "--", ...args], sandbox),
 
   bindings: () => {
-    run("cargo", ["test", "-q", "-p", "starter-desktop", "--test", "bindings"], {
+    run("cargo", ["test", "-q", "-p", DESKTOP, "--test", "bindings"], {
       STARTER_UPDATE_BINDINGS: "1",
     });
     console.log("ui/src/bindings.ts geschrieben. Weiter mit:  npm run build:ui");
@@ -83,7 +92,7 @@ const aufgaben = {
 
   // ACHTUNG: löscht die echten Daten der Anwendung.
   "data-reset": async () => {
-    const pfade = spawnSync("cargo", ["run", "-q", "-p", "starter-cli", "--", "paths", "--json"], {
+    const pfade = spawnSync("cargo", ["run", "-q", "-p", CLI, "--", "paths", "--json"], {
       cwd: ROOT,
       encoding: "utf8",
     });
