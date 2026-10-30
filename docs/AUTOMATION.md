@@ -198,10 +198,60 @@ auf.
 | Gar kein Lauf, obwohl du der Inhaber bist | Liegt das Repository unter einer **Organisation**? Dann ist `github.repository_owner` deren Name und nie dein Benutzername. In `claude-issue.yml` den eigenen Namen eintragen — der Kommentar dort sagt, wo |
 | Lauf grün, aber Claude hat nichts getan | Kein Token hinterlegt. Im Lauf steht ein Hinweis „übersprungen" |
 | `Claude Code is not installed on this repository` | Die GitHub-App fehlt — Schritt 1. Der Token ist in Ordnung |
-| Lauf scheitert an der Anmeldung | Token abgelaufen oder falsch eingefügt — neu mit `claude setup-token` |
+| `Claude execution failed: result is_error:true`, Abbruch nach ~2 s, `total_cost_usd: 0` | Der Token wird abgelehnt. 401 oder 429 — siehe unten |
 | PR da, aber keine Haken und keine Kommentare | Der Freigabe-Tipp fehlt noch (siehe oben) |
 | `durchsicht` übersprungen | PR ist ein Entwurf oder kommt aus einem Fork |
 | `check` rot nur auf Windows | Genau der Fall, für den die Matrix da ist. `crates/core/tests/layering.rs` nennt die üblichen Ursachen |
+
+---
+
+### Wenn der Token abgelehnt wird
+
+Sieht so aus:
+
+```json
+{"type":"result","subtype":"success","is_error":true,
+ "duration_ms":1996,"num_turns":1,"total_cost_usd":0,"modelUsage":{}}
+```
+
+Kosten null und leeres `modelUsage` heißen: **kein einziger Modellaufruf kam
+zustande.** Die Action verschluckt den eigentlichen Grund — bekannte offene
+Ausgabe [claude-code-action#1614](https://github.com/anthropics/claude-code-action/issues/1614).
+Dahinter stecken zwei verschiedene Fälle, die **gegensätzliche** Maßnahmen
+verlangen:
+
+| | |
+|---|---|
+| **401** | Der Token ist ungültig, abgelaufen oder beim Einfügen beschädigt → neu erzeugen |
+| **429** | Das Abo-Kontingent ist erschöpft → ein neuer Token ändert **nichts**, nur Warten oder ein API-Schlüssel hilft |
+
+Wer das verwechselt, erzeugt im zweiten Fall endlos neue Token, die alle
+dasselbe tun. Deshalb erst fragen, dann handeln — **am eigenen Rechner**, der
+Token gehört nirgendwo anders hin:
+
+```bash
+curl -s -D- -o /dev/null https://api.anthropic.com/v1/messages \
+  -H "authorization: Bearer $CLAUDE_CODE_OAUTH_TOKEN" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "anthropic-beta: oauth-2025-04-20" \
+  -H "content-type: application/json" \
+  -d '{"model":"claude-sonnet-5","max_tokens":16,
+       "system":"You are Claude Code, Anthropic'"'"'s official CLI for Claude.",
+       "messages":[{"role":"user","content":"say OK"}]}'
+```
+
+Die `system`-Zeile ist nicht schmückend: Ohne sie weist der Dienst
+Abo-Token ab, und man misst den falschen Fehler.
+
+* **`HTTP/2 429`** mit Kopfzeilen `anthropic-ratelimit-unified-…` → Kontingent.
+* **`HTTP/2 401`** ohne solche Kopfzeilen → echte Ablehnung, neuen Token holen.
+* **`HTTP/2 200`** → der Token ist in Ordnung, der Fehler liegt woanders.
+
+**Wenn es das Kontingent war**, ist die Frage nicht technisch, sondern eine
+Entscheidung: warten, oder die Workflows auf einen API-Schlüssel umstellen
+(`anthropic_api_key` statt `claude_code_oauth_token`). Der wird getrennt
+abgerechnet und hängt nicht am Abo — in der verlinkten Ausgabe ist das der
+Weg, auf dem die meisten gelandet sind.
 
 ---
 
