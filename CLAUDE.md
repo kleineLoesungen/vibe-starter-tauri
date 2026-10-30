@@ -50,14 +50,14 @@ Nur dort. npm-Versionen stehen **exakt** (ohne `^`) in `package.json`.
 
 | Paket | Version | Grund |
 |---|---|---|
-| **tauri** / **@tauri-apps/api** / **@tauri-apps/cli** | **2.11** | Rust-Kiste und npm-Pakete müssen in derselben Nebenversion bleiben, sonst meldet `tauri dev` „version mismatch". Plugins (`tauri-plugin-opener` ↔ `@tauri-apps/plugin-opener`) ebenso paarweise. |
+| **tauri** / **@tauri-apps/api** / **@tauri-apps/cli** | **2.12** | Rust-Kiste und npm-Pakete müssen in derselben Nebenversion bleiben, sonst meldet `tauri dev` „version mismatch". Plugins (`tauri-plugin-opener` ↔ `@tauri-apps/plugin-opener`) ebenso paarweise. |
 | **ts-rs** | **12** | Erzeugt `ui/src/bindings.ts`. Die API hat sich zwischen 10, 11 und 12 geändert (`Config`-Argument). |
 | **mermaid** | **12.2** | Lädt nach (`import("mermaid")`). Die alte `mermaid.init()`/`contentLoaded`-API existiert nicht mehr — `parse` und `render` benutzen. |
 | **DOMPurify** | **3.4.17** | Darunter liegen gemeldete XSS-Lücken. Diese Kiste ist die einzige Bereinigung zwischen Benutzertext und Webview — hier ist „alte Fassung" kein Schönheitsfehler. |
 | **React** | **19** | `ReactDOM.render` gibt es nicht mehr — `createRoot`. |
 | **TypeScript** | **7** | Der native Compiler. `tsc --noEmit` prüft nur, gebaut wird von Vite. |
 | **Vite** / **Vitest** | **8** / **5** | Test-Einstellungen stehen in `vite.config.ts` unter `test`. |
-| **Biome** | **2.5** | Formatierer und Linter in einem. Kein ESLint, kein Prettier. |
+| **Biome** | **2.6** | Formatierer und Linter in einem. Kein ESLint, kein Prettier. |
 | **rusqlite** | **0.40** mit `bundled` | SQLite ins Binary. **Nicht** auf die Systembibliothek umstellen. |
 | **Rust** | **1.98.1** | In `rust-toolchain.toml`. |
 
@@ -148,7 +148,7 @@ und wird zur Laufzeit verweigert.
 Im Zweifel nicht raten, sondern nachlesen — die Quellen liegen lokal:
 
 ```bash
-grep -rn "pub fn get_ipc_response" ~/.cargo/registry/src/*/tauri-2.11.*/src/test/
+grep -rn "pub fn get_ipc_response" ~/.cargo/registry/src/*/tauri-2.12.*/src/test/
 ls node_modules/@tauri-apps/api/*.d.ts
 ls crates/desktop/gen/schemas/          # alle Berechtigungen, nach dem ersten Bau
 ```
@@ -419,6 +419,11 @@ just check
 
 Das ist `cargo fmt --check`, Clippy, Biome, `tsc`, alle Rust- und
 Vitest-Tests, `cargo deny` und `npm audit`. Warnungen sind Fehler.
+
+`npm audit` läuft **ohne** `--omit=dev`. Entwicklungswerkzeuge landen nicht
+im Bündel, aber `just dev` startet den Vite-Server auf dem eigenen Rechner —
+eine Lücke darin trifft den, der am Projekt arbeitet. Wer das Rauschen nicht
+erträgt, hebt `--audit-level`, statt die halbe Liste auszublenden.
 
 ### Wenn du aus einem Issue heraus arbeitest
 

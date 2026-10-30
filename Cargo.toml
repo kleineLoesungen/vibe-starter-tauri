@@ -48,9 +48,9 @@ clap = { version = "4.6.7", features = ["derive", "env", "string"] }
 clap_complete = "4.6.10"
 clap_mangen = "0.3.3"
 
-tauri = { version = "2.11.5", features = [] }
-tauri-build = { version = "2.6.3", features = [] }
-tauri-plugin-opener = "2.5.5"
+tauri = { version = "2.12.5", features = [] }
+tauri-build = { version = "2.7.4", features = [] }
+tauri-plugin-opener = "2.7.2"
 
 # Nur für Tests.
 assert_cmd = "2.2.2"

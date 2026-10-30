@@ -127,7 +127,7 @@ in deiner CI ausführen lassen.
 | Bereich | Umsetzung |
 |---|---|
 | Aufbau | Arbeitsbereich `core` · `cli` · `desktop` + `ui/`, bewacht von einem Test |
-| Desktop | Tauri 2.11 auf **macOS, Linux und Windows** — Webview des Systems, Fenster in wenigen MB statt Chromium |
+| Desktop | Tauri 2.12 auf **macOS, Linux und Windows** — Webview des Systems, Fenster in wenigen MB statt Chromium |
 | Ein Codepfad | **Keine einzige `#[cfg(target_os)]`** im Rust-Code, kein Bash in der Werkzeugkette — beides von Tests bewacht |
 | Oberfläche | React 19, TypeScript 7, Vite 8 — kein CSS-Framework, keine Zustandsbibliothek |
 | Browserpakete | mermaid 12 (nachgeladen), marked, DOMPurify — alles über npm, läuft offline |

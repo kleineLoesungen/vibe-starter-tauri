@@ -76,9 +76,14 @@ test:
     npm run test:ui
 
 # Lizenzen und bekannte Sicherheitslücken der Abhängigkeiten — Rust und npm.
+#
+# BEWUSST OHNE `--omit=dev`: Entwicklungswerkzeuge landen zwar nicht im
+# Bündel, aber `just dev` startet den Vite-Server auf diesem Rechner. Eine
+# Lücke darin trifft nicht die Benutzer der App — wohl aber jeden, der
+# daran arbeitet. Genau so eine ist hier schon einmal durchgerutscht.
 deny:
     cargo deny check
-    npm audit --omit=dev --audit-level=high
+    npm audit --audit-level=high
 
 # Geänderte Schnappschüsse der CLI ansehen und annehmen.
 snapshots:
