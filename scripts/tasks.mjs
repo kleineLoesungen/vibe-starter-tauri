@@ -49,8 +49,7 @@ const sandbox = {
 const aufgaben = {
   "dev-sandbox": () => run("npm", ["run", "tauri", "dev"], sandbox),
 
-  sandbox: (args) =>
-    run("cargo", ["run", "-q", "-p", "starter-cli", "--", ...args], sandbox),
+  sandbox: (args) => run("cargo", ["run", "-q", "-p", "starter-cli", "--", ...args], sandbox),
 
   bindings: () => {
     run("cargo", ["test", "-q", "-p", "starter-desktop", "--test", "bindings"], {
@@ -84,11 +83,10 @@ const aufgaben = {
 
   // ACHTUNG: löscht die echten Daten der Anwendung.
   "data-reset": async () => {
-    const pfade = spawnSync(
-      "cargo",
-      ["run", "-q", "-p", "starter-cli", "--", "paths", "--json"],
-      { cwd: ROOT, encoding: "utf8" },
-    );
+    const pfade = spawnSync("cargo", ["run", "-q", "-p", "starter-cli", "--", "paths", "--json"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
     if (pfade.status !== 0) {
       process.stderr.write(pfade.stderr ?? "");
       process.exit(pfade.status ?? 1);

@@ -17,7 +17,7 @@
 // dafür einen Trick. Node liest die Datei vollständig, bevor es loslegt.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

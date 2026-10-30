@@ -39,7 +39,8 @@ if (!version) {
 }
 
 // Nur der NAME der Ausgabedatei hängt vom System ab, nicht ihr Aufbau.
-const system = { darwin: "macos", win32: "windows", linux: "linux" }[process.platform] ?? process.platform;
+const system =
+  { darwin: "macos", win32: "windows", linux: "linux" }[process.platform] ?? process.platform;
 const arch = { x64: "x86_64", arm64: "aarch64" }[process.arch] ?? process.arch;
 const exe = process.platform === "win32" ? ".exe" : "";
 
