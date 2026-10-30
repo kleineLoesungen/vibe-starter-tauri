@@ -109,5 +109,17 @@ jobs:
           # Hängt am Abo des Inhabers. Anlegen mit `claude setup-token`,
           # dann unter Settings → Secrets and variables → Actions.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # NOTSCHALTER FÜR DIE FEHLERSUCHE, standardmäßig aus.
+          #
+          # Scheitert der Lauf mit `is_error:true` nach zwei Sekunden, nennt
+          # die Action den Grund NICHT — er wird erst hiermit sichtbar
+          # (anthropics/claude-code-action#1614). Zünden über die Variable
+          # CLAUDE_DEBUG=true unter Settings → Secrets and variables →
+          # Actions → Variables; danach wieder auf false.
+          #
+          # ACHTUNG in einem öffentlichen Repository: Die volle Ausgabe ist
+          # dann für jeden lesbar, auch Dateiinhalte, die Claude liest.
+          # Deshalb nur anlassbezogen einschalten, nicht dauerhaft.
+          show_full_output: ${{ vars.CLAUDE_DEBUG == 'true' }}
           # Kein --model: Für das Umsetzen darf das stärkere Modell ran.
           # Die Festlegung auf Sonnet gilt nur den Prüf-Agents.

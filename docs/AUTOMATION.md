@@ -231,6 +231,17 @@ mit, und im Secret-Feld sieht man es nicht. Die Workflows prüfen das
 inzwischen selbst und brechen mit Klartext ab, statt dich die zwei Sekunden
 deuten zu lassen.
 
+#### Wenn der Token in Ordnung ist und es trotzdem scheitert
+
+Dann braucht es die verschwiegene Fehlermeldung. Variable
+**`CLAUDE_DEBUG` = `true`** setzen (*Settings → Secrets and variables →
+Actions → **Variables***), den Lauf wiederholen, Meldung lesen,
+**Variable wieder auf `false`**.
+
+In einem öffentlichen Repository ist die volle Ausgabe danach für jeden
+lesbar — auch Dateiinhalte, die Claude liest. Deshalb anlassbezogen
+einschalten, nie dauerhaft.
+
 #### Den Token im Secret prüfen lassen
 
 Statt zu raten: **Actions → „token prüfen" → Run workflow.**
