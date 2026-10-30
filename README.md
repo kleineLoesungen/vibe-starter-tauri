@@ -106,6 +106,22 @@ Ein `merge` wäre der falsche Griff — er zöge die ganze Kit-Geschichte herein
 
 ---
 
+## Vom Telefon aus arbeiten
+
+Issue schreiben, `@claude` hineinschreiben, warten. Claude setzt um, lässt
+`just check` laufen und öffnet einen PR; drei Prüf-Agents sehen ihn durch und
+schreiben je einen Kommentar; die CI baut auf allen drei Systemen.
+
+Dafür fehlt einmalig ein Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN` —
+Einrichtung, Sperren und Kosten stehen in
+[docs/AUTOMATION.md](docs/AUTOMATION.md).
+
+Auslösen kann das **nur der Repo-Inhaber**. Dieses Repository ist öffentlich;
+ohne diese Sperre könnte jeder Fremde mit einem `@claude`-Kommentar Aufträge
+in deiner CI ausführen lassen.
+
+---
+
 ## Was drin ist
 
 | Bereich | Umsetzung |

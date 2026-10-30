@@ -406,6 +406,23 @@ just check
 Das ist `cargo fmt --check`, Clippy, Biome, `tsc`, alle Rust- und
 Vitest-Tests, `cargo deny` und `npm audit`. Warnungen sind Fehler.
 
+### Wenn du aus einem Issue heraus arbeitest
+
+Dann läufst du in der CI, und der Mensch sitzt wahrscheinlich am Telefon.
+Zwei Dinge folgen daraus:
+
+1. **`just check` laufen lassen, bevor du einen PR öffnest.** Die
+   Werkzeugkette ist im Workflow installiert. Ein PR, der erst in der CI
+   rot wird, kostet eine ganze Runde — und die dauert, wenn der Mensch
+   unterwegs ist.
+2. **Schreib in die PR-Beschreibung, was du nicht prüfen konntest.** „Auf
+   Windows nicht ausprobiert", „Diagramm nur im Test gesehen, nicht im
+   Fenster". Lieber ein ehrlicher Vorbehalt als ein stilles Risiko.
+
+Drei Prüf-Agents sehen deinen PR danach durch (`.claude/agents/`). Ihre
+Prüflisten sind kein Geheimnis — lies sie vorher, dann sparst du euch beiden
+eine Runde. Der ganze Ablauf steht in `docs/AUTOMATION.md`.
+
 ---
 
 ## Eine neue Ressource anlegen
