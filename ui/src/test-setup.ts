@@ -22,4 +22,13 @@ Object.defineProperty(window, "matchMedia", {
 afterEach(() => {
   cleanup();
   clearMocks();
+  // `applyTheme` schreibt an <html>, und das überlebt `cleanup()`. Ohne
+  // dieses Aufräumen könnte ein Test grün sein, weil der Test davor das
+  // Aussehen gesetzt hat — der unangenehmste Fehler, den eine Testreihe
+  // haben kann.
+  const wurzel = document.documentElement;
+  for (const name of Object.keys(wurzel.dataset)) {
+    delete wurzel.dataset[name];
+  }
+  wurzel.removeAttribute("style");
 });

@@ -104,7 +104,12 @@ describe("Oberfläche", () => {
 
     expect(await screen.findByRole("button", { name: /Einkauf/ })).toBeTruthy();
     expect(commands("note_list")[0]?.args).toEqual({ order: "recent" });
-    expect(document.documentElement.dataset.theme).toBe("light");
+    // waitFor, nicht expect: Das Aussehen setzt ein useEffect, nachdem die
+    // Einstellungen angekommen sind. Dass die Notizen schon dastehen, heißt
+    // nicht, dass React diesen Effekt bereits ausgeführt hat — auf einem
+    // langsamen Rechner liegt dazwischen ein Zeichendurchgang. Genau daran
+    // ist dieser Test in der CI auf Windows hängen geblieben.
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
   });
 
   it("legt eine Notiz an und schickt den Entwurf als `input`", async () => {
@@ -196,7 +201,10 @@ describe("Oberfläche", () => {
     await user.click(screen.getByRole("button", { name: "Übernehmen" }));
 
     await waitFor(() => expect(commands("config_set")).toHaveLength(1));
-    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#ffdd00");
-    expect(document.documentElement.dataset.accentLight).toBe("true");
+    // Auch hier: Der Befehl ist durch, der Effekt noch nicht zwingend.
+    await waitFor(() => {
+      expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#ffdd00");
+      expect(document.documentElement.dataset.accentLight).toBe("true");
+    });
   });
 });

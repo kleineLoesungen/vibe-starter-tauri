@@ -7,6 +7,12 @@
 #
 # Das Ergebnis ist ein RELEASE-ENTWURF. Veröffentlicht wird von Hand, nach
 # einem Blick auf die Dateien. Zum Signieren siehe docs/RELEASE.md.
+#
+# Hier läuft BEWUSST `just`, nicht `tauri-action`: Genau die Rezepte, die
+# auch auf dem eigenen Rechner laufen. Die Zwischenschicht hatte beim ersten
+# Versuch ein zweites `--` in den Aufruf gesetzt; damit ging
+# `--target universal-apple-darwin` an cargo statt an Tauri, das das
+# Pseudoziel als einziges kennt. Ein Fehler, den man lokal nie sieht.
 name: release
 
 on:
@@ -23,13 +29,13 @@ jobs:
       matrix:
         include:
           - os: macos-15
-            args: "--target universal-apple-darwin"
+            recipe: bundle-macos-universal
           # Älteste unterstützte glibc: ein Binary von einer neueren
           # Distribution startet auf einer älteren nicht.
           - os: ubuntu-22.04
-            args: ""
+            recipe: bundle
           - os: windows-2022
-            args: ""
+            recipe: bundle
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -48,35 +54,35 @@ jobs:
           cache: npm
       - run: rustup show
       - uses: Swatinem/rust-cache@v2
-
-      # Die Ziele stehen nicht in rust-toolchain.toml — sonst lüde jeder
-      # Linux- und Windows-Rechner zwei Apple-Bibliotheken herunter.
-      - name: Apple-Ziele (macOS)
-        if: runner.os == 'macOS'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
-
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       - run: npm ci
 
-      - uses: tauri-apps/tauri-action@v0
+      # Ohne Finder-Zugriff hängt bundle_dmg.sh beim Gestalten des Fensters.
+      # Auf Runnern ist CI ohnehin gesetzt; hier steht es, damit der Grund
+      # dokumentiert ist.
+      - name: Bündeln
+        run: just ${{ matrix.recipe }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Ohne Finder-Zugriff hängt bundle_dmg.sh beim Gestalten des
-          # Fensters. Auf Runnern ist CI ohnehin gesetzt; hier steht es
-          # noch einmal, damit der Grund dokumentiert ist.
           CI: true
-        with:
-          tauriScript: npm run tauri --
-          args: ${{ matrix.args }}
-          tagName: ${{ github.ref_name }}
-          releaseName: ${{ github.ref_name }}
-          releaseDraft: true
 
       # Die Kommandozeile kommt nicht ins Desktop-Bündel (Tauri verlangte
       # dafür einen „Sidecar" mit Zielplattform im Namen) — deshalb daneben
       # als eigener Tarball, je System einer.
-      - run: node scripts/package-cli.mjs
+      - name: Kommandozeile packen
+        run: node scripts/package-cli.mjs
+
+      # Jedes System trifft nur seine eigenen Muster; die übrigen bleiben
+      # leer und werden stillschweigend übergangen.
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           draft: true
-          files: dist/*.tar.gz
+          files: |
+            target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            target/release/bundle/deb/*.deb
+            target/release/bundle/appimage/*.AppImage
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*-setup.exe
+            dist/*.tar.gz
