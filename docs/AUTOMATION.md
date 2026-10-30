@@ -28,21 +28,28 @@ will.
 
 ---
 
-## Einmalige Einrichtung
+## Einrichtung
 
-Ohne diesen Schritt tut `@claude` nichts.
+Ohne diesen Schritt tut `@claude` nichts — die Workflows überspringen sich
+dann stillschweigend und hinterlassen einen Hinweis im Lauf statt eines
+roten Hakens.
+
+**Das Kit selbst hat bewusst keinen Token hinterlegt.** Ein Secret gehört in
+ein Projekt, nicht in eine Vorlage. Die Schritte unten macht man einmal je
+abgeleitetem Projekt.
 
 ### 1. Token erzeugen
 
-An einem Rechner, einmal:
+An einem Rechner mit der Claude-CLI, einmal überhaupt:
 
 ```bash
 claude setup-token
 ```
 
-Der Token hängt an **deinem Abo** (Pro, Max, Team oder Enterprise). Er wird
-genau einmal angezeigt und lässt sich später nirgends wieder auslesen —
-also gleich einfügen.
+Der Token hängt an **deinem Abo** (Pro, Max, Team oder Enterprise), nicht am
+Repository — **derselbe Token passt in alle deine Projekte**. Kopiere ihn
+beim Erzeugen gleich weg; ob er später noch einmal abrufbar ist, verlass dich
+nicht darauf.
 
 ### 2. Als Secret hinterlegen
 
@@ -53,7 +60,8 @@ also gleich einfügen.
 | Name | `CLAUDE_CODE_OAUTH_TOKEN` |
 | Wert | die Ausgabe von `claude setup-token` |
 
-Das geht auch im Browser auf dem Telefon.
+Das geht auch im Browser auf dem Telefon — den Token aus dem Passwortspeicher
+einfügen.
 
 ### 3. Probe
 
@@ -173,7 +181,8 @@ auf.
 |---|---|
 | Gar kein Lauf nach `@claude` | Kommentar nicht vom Repo-Inhaber, oder `@claude` fehlt |
 | Gar kein Lauf, obwohl du der Inhaber bist | Liegt das Repository unter einer **Organisation**? Dann ist `github.repository_owner` deren Name und nie dein Benutzername. In `claude-issue.yml` den eigenen Namen eintragen — der Kommentar dort sagt, wo |
-| Lauf scheitert sofort an der Anmeldung | `CLAUDE_CODE_OAUTH_TOKEN` fehlt oder ist abgelaufen — neu mit `claude setup-token` |
+| Lauf grün, aber Claude hat nichts getan | Kein Token hinterlegt. Im Lauf steht ein Hinweis „übersprungen" |
+| Lauf scheitert an der Anmeldung | Token abgelaufen oder falsch eingefügt — neu mit `claude setup-token` |
 | PR da, aber keine Haken und keine Kommentare | Der Freigabe-Tipp fehlt noch (siehe oben) |
 | `durchsicht` übersprungen | PR ist ein Entwurf oder kommt aus einem Fork |
 | `check` rot nur auf Windows | Genau der Fall, für den die Matrix da ist. `crates/core/tests/layering.rs` nennt die üblichen Ursachen |
@@ -186,5 +195,9 @@ auf.
 Projekt hat alles sofort.
 
 **Was es nicht mitnimmt, ist der Token.** Der hängt am Abo einer Person und
-kann nicht in einem Template stehen. Jedes Projekt braucht seinen eigenen
-Eintrag `CLAUDE_CODE_OAUTH_TOKEN`, Schritte 1 und 2 oben.
+hat in einer Vorlage nichts zu suchen. Jedes Projekt braucht seinen eigenen
+Eintrag `CLAUDE_CODE_OAUTH_TOKEN` — Schritt 2 oben, mit demselben Token.
+
+Bis dahin laufen die beiden Claude-Workflows ins Leere, aber sauber: Sie
+überspringen sich und schreiben einen Hinweis in den Lauf. Keine roten Haken
+an einem frischen Projekt.

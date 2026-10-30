@@ -43,8 +43,19 @@ jobs:
       issues: write
       # Die Action braucht das auch mit eigenem Token.
       id-token: write
+    # Das Kit selbst hat keinen Token — der gehört in das abgeleitete
+    # Projekt, nicht in ein Template. Ohne ihn sagt der Lauf, was fehlt,
+    # statt die halbe Werkzeugkette für nichts zu installieren.
+    env:
+      TOKEN_DA: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
+      - name: Ohne Token übersprungen
+        if: env.TOKEN_DA != 'true'
+        run: |
+          echo "::notice title=Claude übersprungen::Kein CLAUDE_CODE_OAUTH_TOKEN hinterlegt. Einrichtung: docs/AUTOMATION.md"
+
       - uses: actions/checkout@v5
+        if: env.TOKEN_DA == 'true'
         with:
           # Volle Historie, damit Claude Vorgeschichte lesen kann.
           fetch-depth: 0
@@ -54,6 +65,7 @@ jobs:
       # und der Fehler käme erst eine Runde später zurück — teuer, wenn
       # man am Telefon sitzt.
       - name: Systembibliotheken
+        if: env.TOKEN_DA == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -61,17 +73,23 @@ jobs:
             libayatana-appindicator3-dev librsvg2-dev
 
       - uses: actions/setup-node@v5
+        if: env.TOKEN_DA == 'true'
         with:
           node-version: 22
           cache: npm
       - run: rustup show
+        if: env.TOKEN_DA == 'true'
       - uses: Swatinem/rust-cache@v2
+        if: env.TOKEN_DA == 'true'
       - uses: taiki-e/install-action@v2
+        if: env.TOKEN_DA == 'true'
         with:
           tool: just,cargo-deny
       - run: npm ci
+        if: env.TOKEN_DA == 'true'
 
       - uses: anthropics/claude-code-action@v1
+        if: env.TOKEN_DA == 'true'
         with:
           # Hängt am Abo des Inhabers. Anlegen mit `claude setup-token`,
           # dann unter Settings → Secrets and variables → Actions.

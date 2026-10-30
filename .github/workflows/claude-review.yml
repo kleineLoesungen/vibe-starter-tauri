@@ -33,12 +33,23 @@ jobs:
       fail-fast: false
       matrix:
         agent: [architektur, dokumentation, sicherheit]
+    # Das Kit selbst hat keinen Token — der gehört in das abgeleitete
+    # Projekt, nicht in ein Template. Ohne ihn wird übersprungen statt rot.
+    env:
+      TOKEN_DA: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
+      - name: Ohne Token übersprungen
+        if: env.TOKEN_DA != 'true'
+        run: |
+          echo "::notice title=Durchsicht übersprungen::Kein CLAUDE_CODE_OAUTH_TOKEN hinterlegt. Einrichtung: docs/AUTOMATION.md"
+
       - uses: actions/checkout@v5
+        if: env.TOKEN_DA == 'true'
         with:
           fetch-depth: 0
 
       - uses: anthropics/claude-code-action@v1
+        if: env.TOKEN_DA == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
