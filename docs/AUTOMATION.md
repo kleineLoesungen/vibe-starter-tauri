@@ -257,6 +257,20 @@ Action benutzt — und sagt in Klartext, was der Dienst dazu meint:
 | *429 — Kontingent erschöpft* | Ein **neuer** Token ändert nichts |
 | *Token in Ordnung* | Scheitert Claude trotzdem, liegt es nicht am Token |
 
+Der Lauf hat zwei Aufgaben, und ihr Zusammenspiel ist die eigentliche
+Auskunft:
+
+| `token` | `action` | Bedeutung |
+|---|---|---|
+| grün | grün | Einrichtung in Ordnung. Ein Fehler liegt am Auftrag, nicht am Aufbau |
+| rot | — | Das Secret selbst. Meldung oben lesen |
+| grün | rot | Der Token ist gut, erreicht aber die Claude-CLI im Runner nicht (`Not logged in · Please run /login`). Das liegt **nicht** an diesem Projekt — siehe [claude-code-action#676](https://github.com/anthropics/claude-code-action/issues/676) |
+
+Die Aufgabe `action` ruft dieselbe Action wie `claude-issue.yml`, aber ohne
+alles Drumherum: keine Werkzeugkette, kein Cache, kein Job-`env`. Läuft sie
+und der große Workflow nicht, liegt es an einem der weggelassenen Schritte —
+und man weiß, wo zu suchen ist.
+
 Der Token wird dabei nie ausgegeben, nur seine Länge und die Antwort des
 Dienstes. Den Lauf kann nur der Repo-Inhaber starten.
 

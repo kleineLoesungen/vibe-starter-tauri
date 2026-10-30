@@ -11,6 +11,15 @@
 #
 # Der Token selbst wird nie ausgegeben, nur seine Länge und die Antwort des
 # Dienstes.
+#
+# Zwei Aufgaben, die zusammen eine binäre Frage beantworten:
+#
+#   token   — Trägt das Secret auf der Ebene der Programmierschnittstelle?
+#   action  — Kommt der Token auch bei der Claude-CLI im Runner an?
+#
+# „token grün, action rot" heißt: Der Token ist gut, aber die Action reicht
+# ihn nicht durch (`Not logged in · Please run /login`). Dann liegt es nicht
+# an der Einrichtung dieses Projekts.
 name: token prüfen
 
 on:
@@ -70,3 +79,24 @@ jobs:
               exit 1
               ;;
           esac
+
+  # Derselbe Aufruf wie in claude-issue.yml, aber OHNE alles Drumherum:
+  # keine Werkzeugkette, kein Cache, kein Job-env. Läuft das hier und der
+  # große Workflow nicht, liegt es an einem der weggelassenen Schritte.
+  # Scheitert auch dies, liegt es an der Action oder am Konto.
+  action:
+    if: github.event.sender.login == github.repository_owner
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "Antworte mit genau einem Wort: OK"
+          # Hier dauerhaft an: Der Lauf erzeugt nichts als dieses eine Wort,
+          # es gibt also nichts zu verraten — und ohne den Schalter nennt
+          # die Action den Grund eines Fehlschlags nicht.
+          show_full_output: "true"
