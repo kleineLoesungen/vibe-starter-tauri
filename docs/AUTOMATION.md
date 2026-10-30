@@ -179,6 +179,54 @@ auf.
 
 ---
 
+## Rückfragen
+
+Jeder Kommentar mit `@claude` startet einen neuen Lauf, der das Issue und
+**alle** bisherigen Kommentare liest. Der Verlauf ist das Gespräch; du kannst
+also antworten wie in einem Chat, nur dass jede Antwort einen Lauf auslöst.
+
+`CLAUDE.md` weist Claude an, **selten** zu fragen: selbst entscheiden und die
+Entscheidung benennen, wo es eine vertretbare Voreinstellung gibt — und nur
+dann fragen, wenn die Antwort die Arbeit wirklich ändert. Dann aber mit zwei
+oder drei benannten Möglichkeiten und einer Empfehlung, damit ein Wort als
+Antwort genügt.
+
+**Eine Rückfrage kommt ohne Pull Request.** Ein PR, der in Wahrheit eine Frage
+ist, sieht nach Fortschritt aus, wo keiner ist.
+
+---
+
+## Wenn das Kontingent erschöpft ist
+
+Der Workflow fragt **vor** der eigentlichen Arbeit nach, ob das Kontingent
+reicht. Ist es aufgebraucht, bricht er ab — und schreibt den Grund dorthin,
+wo du liest:
+
+> ⏳ **Kontingent erschöpft** — ich konnte nicht anfangen.
+> Frei wieder ab etwa **31.10. 02:50 UTC**. Danach genügt ein neuer
+> Kommentar mit `@claude`.
+
+Ohne diese Vorabfrage liefe die ganze Werkzeugkette an, um nach zwei
+Sekunden an einem `429` zu scheitern — mit demselben nichtssagenden
+`is_error:true` wie bei jedem anderen Fehler. Die Prüfung kostet einen
+Aufruf ohne Modellverbrauch.
+
+Drei Dinge dazu:
+
+* **Ein neuer Token hilft nicht.** Das Kontingent hängt am Abo, nicht am
+  Token. Genau diese Verwechslung soll die Meldung verhindern.
+* **Scheitert die Prüfung selbst** (Netz, Zeitüberschreitung), wird *nicht*
+  blockiert — lieber ein unnötiger Lauf als ein Auftrag, der wegen einer
+  wackligen Leitung liegen bleibt.
+* **Die Durchsicht auf PRs prüft das nicht vorab.** Drei Agents, drei
+  Aufrufe — das wäre mehr Prüfung als Arbeit. Dort siehst du es am roten
+  Haken und fragst `token prüfen`.
+
+Wer dauerhaft mehr braucht, als das Abo hergibt, stellt die Workflows auf
+`anthropic_api_key` um: getrennt abgerechnet, kein gemeinsames Kontingent.
+
+---
+
 ## Was es verbraucht
 
 * **Actions-Minuten:** in einem öffentlichen Repository kostenlos, auch für
