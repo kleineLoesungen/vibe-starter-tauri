@@ -136,6 +136,15 @@ und wird zur Laufzeit verweigert.
     bettet es ein. Nach `just clean` erst `npm run build:ui`. `just test` tut
     das von selbst.
 
+11. **Testbinäre brauchen auf Windows ein eigenes Manifest.** `tauri-build`
+    hängt das Anwendungsmanifest über `rustc-link-arg-bins` an — das erreicht
+    nur das Programm, nicht `tests/`. Ohne Manifest aktiviert Windows Common
+    Controls v6 nicht, und **jedes Testbinär, das Tauri wirklich benutzt,
+    stirbt beim Laden** mit `STATUS_ENTRYPOINT_NOT_FOUND` (0xc0000139) —
+    bevor ein einziger Test läuft. Das Kit hängt es deshalb in
+    `crates/desktop/build.rs` selbst an alle Ziele. Nicht entfernen, solange
+    tauri-apps/tauri#13419 offen ist.
+
 Im Zweifel nicht raten, sondern nachlesen — die Quellen liegen lokal:
 
 ```bash
@@ -169,9 +178,14 @@ Wer wirklich eine braucht, trägt die Datei in `PLATTFORM_AUSNAHMEN` ein **und
 schreibt dazu, warum**. Dann steht die Ausnahme an einer Stelle, statt verstreut
 im Quelltext.
 
-Der einzige Windows-Sonderfall im ganzen Kit ist `windows_subsystem` in
-`crates/desktop/src/main.rs` — und der hängt an `debug_assertions`, nicht am
-Betriebssystem.
+Zwei Stellen bleiben, und beide stehen ausdrücklich dort, wo man sie sucht:
+
+* `windows_subsystem` in `crates/desktop/src/main.rs` — hängt an
+  `debug_assertions`, nicht am Betriebssystem, und tut anderswo nichts.
+* `crates/desktop/build.rs` hängt das Windows-Manifest an alle Ziele
+  (Fallstrick 11 oben). `/MANIFEST:EMBED` ist ein Schalter des
+  MSVC-Linkers — dafür gibt es keine plattformfreie Schreibweise. Die Datei
+  steht deshalb in `PLATTFORM_AUSNAHMEN`.
 
 ### Kein Bash in der Werkzeugkette
 

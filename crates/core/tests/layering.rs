@@ -304,12 +304,22 @@ const PLATTFORM_CFGS: &[&str] = &[
     "cfg!(unix)",
     "cfg(not(windows))",
     "cfg(not(unix))",
+    // Die Bauskript-Variante. Sie ist für ein build.rs die technisch
+    // richtige Schreibweise — durchrutschen soll sie trotzdem nicht.
+    "CARGO_CFG_TARGET_OS",
+    "CARGO_CFG_TARGET_ENV",
 ];
 
 /// Dateien, die über Plattform-cfgs reden dürfen, ohne welche zu enthalten.
 const PLATTFORM_AUSNAHMEN: &[&str] = &[
     // Diese Datei nennt die verbotenen Zeichenfolgen, um nach ihnen zu suchen.
     "crates/core/tests/layering.rs",
+    // Hängt das Windows-Anwendungsmanifest an alle Ziele, weil tauri-build
+    // es nur an Binärziele hängt. Ohne das stirbt JEDES Testbinär auf
+    // Windows beim Laden (STATUS_ENTRYPOINT_NOT_FOUND). `/MANIFEST:EMBED`
+    // ist ein Schalter des MSVC-Linkers und hat auf den anderen Systemen
+    // keine Entsprechung — hier gibt es keinen Weg ohne.
+    "crates/desktop/build.rs",
 ];
 
 #[test]
