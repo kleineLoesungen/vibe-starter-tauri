@@ -225,6 +225,11 @@ verlangen:
 | **401** | Der Token ist ungültig, abgelaufen oder beim Einfügen beschädigt → neu erzeugen |
 | **429** | Das Abo-Kontingent ist erschöpft → ein neuer Token ändert **nichts**, nur Warten oder ein API-Schlüssel hilft |
 
+**Häufigster Fall ist ein Leerzeichen.** Beim Kopieren rutscht leicht eines
+mit, und im Secret-Feld sieht man es nicht. Die Workflows prüfen das
+inzwischen selbst und brechen mit Klartext ab, statt dich die zwei Sekunden
+deuten zu lassen.
+
 Wer das verwechselt, erzeugt im zweiten Fall endlos neue Token, die alle
 dasselbe tun. Deshalb erst fragen, dann handeln — **am eigenen Rechner**, der
 Token gehört nirgendwo anders hin.
