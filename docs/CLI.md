@@ -128,10 +128,10 @@ starter paths
 starter paths --json | jq -r .db_file
 ```
 
-| | macOS | Linux |
-|---|---|---|
-| Daten | `~/Library/Application Support/starter` | `~/.local/share/starter` |
-| Konfiguration | `~/Library/Application Support/starter` | `~/.config/starter` |
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Daten | `~/Library/Application Support/starter` | `~/.local/share/starter` | `%APPDATA%\starter\data` |
+| Konfiguration | `~/Library/Application Support/starter` | `~/.config/starter` | `%APPDATA%\starter\config` |
 
 Überschreiben mit `--data-dir` / `--config-dir` oder den Umgebungsvariablen
 `STARTER_DATA_DIR` / `STARTER_CONFIG_DIR`.

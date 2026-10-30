@@ -1,6 +1,6 @@
 # Starter — Desktop-Anwendungen mit Tauri, Weboberfläche und Kommandozeile
 
-Startpunkt für Desktop-Werkzeuge auf **macOS und Linux**, deren Oberfläche aus
+Startpunkt für Desktop-Werkzeuge auf **macOS, Linux und Windows**, deren Oberfläche aus
 dem Web kommt: **React und TypeScript** im Webview des Betriebssystems, damit
 Browserpakete wie **mermaid.js**, marked oder Chart-Bibliotheken einfach über
 npm benutzbar sind. Dahinter **Tauri 2** und **eine** Fachlogik in Rust, die
@@ -19,16 +19,26 @@ Das Gegenstück ohne Webview, in reinem Rust mit egui:
 
 ## In fünf Minuten laufen
 
-Voraussetzungen: [rustup](https://rustup.rs), [Node.js 22](https://nodejs.org),
-[just](https://github.com/casey/just) (`brew install just` oder
-`cargo install just`). Unter **Linux** zusätzlich die WebKitGTK-Pakete:
+Voraussetzungen auf **allen** Systemen: [rustup](https://rustup.rs),
+[Node.js 22](https://nodejs.org), [just](https://github.com/casey/just).
+
+| | just installieren | zusätzlich |
+|---|---|---|
+| macOS | `brew install just` | Xcode-Kommandozeilenwerkzeuge |
+| Linux | `cargo install just` | die WebKitGTK-Pakete unten |
+| Windows | `winget install Casey.Just` | [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) mit C++, [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (auf Windows 11 schon da) |
 
 ```bash
+# Linux
 sudo apt install libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
     libayatana-appindicator3-dev librsvg2-dev build-essential
 ```
 
 (Fedora, Arch und andere: [Tauri-Voraussetzungen](https://v2.tauri.app/start/prerequisites/).)
+
+**Kein Git Bash, keine Shell-Skripte.** Jedes `just`-Rezept ist ein schlichter
+Befehl; alles Weitere liegt in `scripts/*.mjs` und läuft über Node. Dieselben
+Befehle auf allen drei Systemen.
 
 ```bash
 just setup    # npm-Pakete, Werkzeuge, einmal durchbauen
@@ -61,7 +71,7 @@ Repository mit frischer Historie an. Danach klonen und umbenennen:
 ```bash
 git clone git@github.com:<du>/notizbuch.git
 cd notizbuch
-./scripts/new-project.sh notizbuch "Notizbuch"
+node scripts/new-project.mjs notizbuch "Notizbuch"
 just setup && just check
 ```
 
@@ -70,14 +80,14 @@ just setup && just check
 ```bash
 git clone https://github.com/kleineLoesungen/vibe-starter-tauri notizbuch
 cd notizbuch
-./scripts/new-project.sh notizbuch "Notizbuch"
+node scripts/new-project.mjs notizbuch "Notizbuch"
 git remote remove origin        # zeigt sonst noch auf das Kit
 just setup && just check
 ```
 
-`new-project.sh` benennt um: Kistennamen, Binaries, Bündelkennung,
+`new-project.mjs` benennt um: Kistennamen, Binaries, Bündelkennung,
 Umgebungsvariablen, Datenverzeichnis, Fenstertitel, `package.json`,
-`tauri.conf.json`.
+`tauri.conf.json`, Workflows.
 
 **Das Skript direkt nach dem Klonen ausführen.** Bis dahin heißt das Projekt
 noch „starter" und benutzt dasselbe Datenverzeichnis wie das Kit — zwei
@@ -101,7 +111,8 @@ Ein `merge` wäre der falsche Griff — er zöge die ganze Kit-Geschichte herein
 | Bereich | Umsetzung |
 |---|---|
 | Aufbau | Arbeitsbereich `core` · `cli` · `desktop` + `ui/`, bewacht von einem Test |
-| Desktop | Tauri 2.11 — Webview des Systems (WebKit), Fenster in wenigen MB statt Chromium |
+| Desktop | Tauri 2.11 auf **macOS, Linux und Windows** — Webview des Systems, Fenster in wenigen MB statt Chromium |
+| Ein Codepfad | **Keine einzige `#[cfg(target_os)]`** im Rust-Code, kein Bash in der Werkzeugkette — beides von Tests bewacht |
 | Oberfläche | React 19, TypeScript 7, Vite 8 — kein CSS-Framework, keine Zustandsbibliothek |
 | Browserpakete | mermaid 12 (nachgeladen), marked, DOMPurify — alles über npm, läuft offline |
 | IPC | Befehle als `async fn`, eine Fehlerhülle wie im CLI-JSON, TS-Typen aus Rust (ts-rs) |
@@ -110,7 +121,8 @@ Ein `merge` wäre der falsche Griff — er zöge die ganze Kit-Geschichte herein
 | Daten | SQLite eingebettet, `STRICT`, WAL, nummerierte Migrationen |
 | Einstellungen | TOML, von Oberfläche und CLI gemeinsam benutzt; hell/dunkel/System, Akzentfarbe |
 | Prüfung | Feldgenaue Fehler aus Rust — in der Oberfläche am Feld, in der CLI als `error.fields` |
-| Ausliefern | `.app` + `.dmg` (auch universal), `.deb` + `.AppImage`, CLI-Tarball |
+| Ausliefern | `.app` + `.dmg` (auch universal), `.deb` + `.AppImage`, `.msi` + `-setup.exe`, CLI-Tarball |
+| Automatik | Bau auf drei Systemen, Entwicklung über Issues, drei Prüf-Agents auf jedem PR |
 | Qualität | rustfmt, Clippy, Biome, `tsc`, `cargo deny`, `npm audit` — Warnungen sind Fehler |
 | Tests | Fachlogik, Schichtwächter, CLI-Schnappschüsse, IPC ohne Fenster, Oberfläche mit `mockIPC` |
 
@@ -150,8 +162,12 @@ ui/
     └── app.css                Aufbau und Abstände
 
 scripts/
-├── new-project.sh           Kit zu eigenem Projekt umbenennen
-└── package-cli.sh           dist/starter-cli-<version>-<os>-<arch>.tar.gz
+├── new-project.mjs          Kit zu eigenem Projekt umbenennen
+├── package-cli.mjs          dist/starter-cli-<version>-<os>-<arch>.tar.gz
+└── tasks.mjs                Was im Justfile keine schlichte Zeile wäre
+
+.claude/agents/              Architektur · Dokumentation · Sicherheit
+.github/workflows/           Bau auf drei Systemen, Issues, PR-Durchsicht
 ```
 
 ---
@@ -159,10 +175,19 @@ scripts/
 ## Ausliefern
 
 ```bash
-just bundle                   # macOS: .app + .dmg   Linux: .deb + .AppImage
-just bundle-macos-universal   # Apple Silicon + Intel in einem Bündel
+just bundle                   # für dieses System
+just bundle-macos-universal   # macOS: Apple Silicon + Intel in einem Bündel
 just package-cli              # die Kommandozeile als Tarball
 ```
+
+| System | Ergebnis |
+|---|---|
+| macOS | `.app` + `.dmg` |
+| Linux | `.deb` + `.AppImage` |
+| Windows | `.msi` + `-setup.exe` |
+
+Gebaut wird immer **auf** dem Zielsystem — ein `.msi` entsteht nur auf Windows.
+Dafür gibt es die Bau-Workflows unter `.github/workflows/`.
 
 Ergebnisse unter `target/release/bundle/` bzw. `dist/`. Signieren und
 Notarisieren: [docs/RELEASE.md](docs/RELEASE.md).
@@ -178,4 +203,5 @@ Notarisieren: [docs/RELEASE.md](docs/RELEASE.md).
 | [docs/RECIPES.md](docs/RECIPES.md) | npm-Paket einbinden, neuer Befehl, neue Ressource, Plugin, Hintergrundarbeit |
 | [docs/DESIGN.md](docs/DESIGN.md) | Aussehen ändern, Farbmarken, Symbole |
 | [docs/CLI.md](docs/CLI.md) | Befehle, Rückgabewerte, JSON-Format |
+| [docs/AUTOMATION.md](docs/AUTOMATION.md) | Entwicklung über Issues, die drei Prüf-Agents, Einrichtung |
 | [docs/RELEASE.md](docs/RELEASE.md) | Bündeln, signieren, notarisieren, veröffentlichen |

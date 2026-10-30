@@ -9,6 +9,7 @@
 //! desktop        →  darf nichts von clap wissen und schreibt kein SQL
 //! ui/src         →  nur api.ts spricht mit Rust
 //! ui/components  →  zeichnet nur: kein api, kein innerHTML
+//! überall        →  keine Plattform-Fallunterscheidung
 //! ```
 //!
 //! **Diesen Test nicht lockern.** Wenn er anschlägt, steht der Code an der
@@ -283,6 +284,76 @@ fn abhaengigkeiten_bleiben_getrennt() {
     );
 }
 
+/// Plattform-Fallunterscheidungen gibt es in diesem Kit nicht.
+///
+/// Das Kit zielt auf macOS, Linux **und** Windows, wird aber fast nur auf
+/// macOS entwickelt. Ein `#[cfg(target_os = ...)]` fiele deshalb erst dem
+/// Benutzer auf der anderen Plattform auf — oder niemandem.
+///
+/// Es gibt fast immer einen Weg ohne: `directories` kennt die Verzeichnisse
+/// jeder Plattform, und `window.url()` in `ipc_contract.rs` kennt die Adresse
+/// der eigenen Oberfläche. Wer doch eine braucht, trägt die Datei unten ein
+/// und schreibt dazu, warum — dann steht die Ausnahme an einer Stelle statt
+/// verstreut im Quelltext.
+const PLATTFORM_CFGS: &[&str] = &[
+    "target_os",
+    "target_family",
+    "cfg(windows)",
+    "cfg!(windows)",
+    "cfg(unix)",
+    "cfg!(unix)",
+    "cfg(not(windows))",
+    "cfg(not(unix))",
+];
+
+/// Dateien, die über Plattform-cfgs reden dürfen, ohne welche zu enthalten.
+const PLATTFORM_AUSNAHMEN: &[&str] = &[
+    // Diese Datei nennt die verbotenen Zeichenfolgen, um nach ihnen zu suchen.
+    "crates/core/tests/layering.rs",
+];
+
+#[test]
+fn es_gibt_keine_plattform_fallunterscheidung() {
+    let mut verstoesse = Vec::new();
+
+    for file in source_files(&workspace_root().join("crates")) {
+        let rel = relative(&file);
+        if !rel.ends_with(".rs") || PLATTFORM_AUSNAHMEN.contains(&rel.as_str()) {
+            continue;
+        }
+        let text = std::fs::read_to_string(&file).expect("Quelldatei lesbar");
+        for (nr, line) in text.lines().enumerate() {
+            let code = code_only(line);
+            for needle in PLATTFORM_CFGS {
+                if code.contains(needle) {
+                    verstoesse.push(format!(
+                        "  {rel}:{}\n    enthält {needle:?}\n    > {}",
+                        nr + 1,
+                        line.trim()
+                    ));
+                }
+            }
+        }
+    }
+
+    assert!(
+        verstoesse.is_empty(),
+        "Plattform-Fallunterscheidung im Quelltext:\n\n{}\n\n\
+         Gibt es wirklich keinen Weg ohne? `directories` kennt die Pfade jeder\n\
+         Plattform, `window.url()` die Adresse der Oberfläche. Wenn doch nicht:\n\
+         Datei in PLATTFORM_AUSNAHMEN eintragen, mit Begründung.",
+        verstoesse.join("\n")
+    );
+}
+
+#[test]
+fn der_waechter_vergleicht_pfade_plattformunabhaengig() {
+    // Die Windows-Probe, die sich auf macOS ausführen lässt.
+    assert_eq!(to_slash(r"ui\src\api.ts".to_string()), "ui/src/api.ts");
+    assert_eq!(to_slash("ui/src/api.ts".to_string()), "ui/src/api.ts");
+    assert!(is_ui_test(&to_slash(r"ui\src\App.test.tsx".to_string())));
+}
+
 #[test]
 fn der_waechter_findet_farben() {
     assert!(has_hex_color("color: #3b6ea5;"));
@@ -303,11 +374,20 @@ fn workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
+/// Der Pfad unterhalb der Wurzel, immer mit `/` als Trennzeichen.
 fn relative(p: &Path) -> String {
-    p.strip_prefix(workspace_root())
-        .unwrap_or(p)
-        .display()
-        .to_string()
+    let p = p.strip_prefix(workspace_root()).unwrap_or(p);
+    to_slash(p.display().to_string())
+}
+
+/// Backslashes zu Schrägstrichen.
+///
+/// Keine Kosmetik: Auf Windows liefert `display()` `ui\\src\\api.ts`, und damit
+/// greift keine einzige Ausnahme in `RULES` mehr — `api.ts` und `theme.css`
+/// würden sich selbst anzeigen. Ein Wächter, der nur auf einer Plattform
+/// richtig urteilt, ist schlimmer als keiner.
+fn to_slash(path: String) -> String {
+    path.replace('\\', "/")
 }
 
 /// Rust-, TypeScript-, CSS- und HTML-Dateien unterhalb von `dir`.

@@ -12,6 +12,12 @@ just package-cli              # die Kommandozeile als Tarball
 |---|---|
 | macOS | `macos/Starter.app`, `dmg/Starter_<version>_<arch>.dmg` |
 | Linux | `deb/starter_<version>_<arch>.deb`, `appimage/Starter_<version>_<arch>.AppImage` |
+| Windows | `msi/Starter_<version>_x64_en-US.msi`, `nsis/Starter_<version>_x64-setup.exe` |
+
+**Gebaut wird immer auf dem Zielsystem.** Es gibt keine Kreuzübersetzung, die
+diesen Namen verdient: WiX (für `.msi`) läuft nur auf Windows, ein `.dmg` nur
+auf macOS. Wer alle drei braucht, nimmt die Workflows unter
+`.github/workflows/` — siehe [AUTOMATION.md](AUTOMATION.md).
 
 Universal-Bündel landen unter `target/universal-apple-darwin/release/bundle/`.
 
@@ -121,15 +127,65 @@ Start — nur unter `#[cfg(target_os = "linux")]`, und nur dort.
 
 ---
 
+## Windows
+
+### Beim Bauen
+
+Nötig sind die **Visual Studio Build Tools** mit der C++-Arbeitslast (für den
+MSVC-Linker, den `rusqlite` mit `bundled` braucht) und **WiX v3** für das
+`.msi` — Letzteres holt sich die Tauri-CLI beim ersten Bau selbst.
+
+Meldet `light.exe` einen Fehler, fehlt meist das optionale Windows-Merkmal
+**VBSCRIPT**; WiX v3 benutzt es intern.
+
+```powershell
+just bundle
+```
+
+Erzeugt beides: `.msi` (klassisch, für die Verteilung im Unternehmen) und
+`-setup.exe` (NSIS, kleiner und freundlicher für einzelne Benutzer).
+
+### WebView2 — die eine Entscheidung
+
+Anders als macOS und Linux bringt Windows die Engine nicht zwingend mit.
+`tauri.conf.json` steht auf `downloadBootstrapper`:
+
+| Modus | Installer größer um | Netz beim Installieren |
+|---|---|---|
+| `downloadBootstrapper` ← **hier gewählt** | 0 MB | ja, falls WebView2 fehlt |
+| `embedBootstrapper` | ~1,8 MB | ja |
+| `offlineInstaller` | ~127 MB | nein |
+
+Auf Windows 11 ist WebView2 immer vorhanden, auf gepflegten
+Windows-10-Rechnern fast immer. Wer in ein Netz ohne Internet ausliefert,
+stellt in `crates/desktop/tauri.conf.json` unter `bundle.windows` auf
+`offlineInstaller` um — und bezahlt es mit 127 MB.
+
+**Die Anwendung selbst braucht nie Netz.** Nur der Installer, und auch der nur
+dann, wenn WebView2 fehlt.
+
+### Signieren
+
+Unsigniert zeigt Windows beim ersten Start „Der Computer wurde durch Windows
+geschützt" (SmartScreen). Weg damit führt über ein Code-Signing-Zertifikat;
+Tauri nimmt es über `bundle.windows.certificateThumbprint` entgegen. Ein
+EV-Zertifikat baut den SmartScreen-Ruf sofort auf, ein normales erst mit der
+Zeit.
+
+### Die Konsole
+
+`crates/desktop/src/main.rs` trägt
+`#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]`. Ohne die
+Zeile öffnet Windows neben dem Fenster ein Konsolenfenster. Im
+Entwicklungsbau bleibt es absichtlich — dort steht das Protokoll aus
+`just dev`.
+
+---
+
 ## Was dieses Kit nicht mitbringt
 
 * **Kein Auto-Update.** `tauri-plugin-updater` braucht einen
   Signaturschlüssel und einen Ort, an dem die Update-Beschreibung liegt. Gehört
   nicht in einen Startpunkt.
-* **Kein Windows.** Nachrüstbar: auf Windows bauen, `"msi"`/`"nsis"` in
-  `bundle.targets`, `icon.ico` über `just icons` wieder erzeugen lassen, und in
-  `crates/desktop/src/main.rs`
-  `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` —
-  sonst öffnet sich neben dem Fenster eine Konsole.
 * **Kein Mobil.** Tauri kann iOS und Android; die Symbole dafür löscht
   `just icons` absichtlich.

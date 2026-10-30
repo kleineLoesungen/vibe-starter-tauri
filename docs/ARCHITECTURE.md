@@ -173,9 +173,12 @@ Notiz.body ──marked──▶ HTML ──DOMPurify──▶ sicheres HTML ─
 Der Preis ist ehrlich zu nennen:
 
 * **Zwei Sprachen, zwei Builds.** npm und Cargo, Biome und Clippy.
-* **Zwei Webviews.** WebKit auf macOS, WebKitGTK auf Linux. Fast immer
-  gleich, aber nicht garantiert — auf Linux einmal ansehen, bevor etwas
-  ausgeliefert wird. Chrome-only-APIs gibt es nicht.
+* **Drei Webviews, zwei Engines.** WebKit auf macOS, WebKitGTK auf Linux,
+  **WebView2 — also Chromium — auf Windows**. Die Oberfläche muss damit auf
+  der ältesten davon laufen, und das ist in aller Regel WebKitGTK. Was in
+  Chrome funktioniert, ist deshalb kein Beleg: Im Zweifel auf caniuse.com
+  unter „Safari" nachsehen. Vor einer Auslieferung einmal unter Linux
+  ansehen — dort fällt zuerst auf, was nur Chromium kann.
 * **Linux braucht `libwebkit2gtk-4.1`** auf dem Zielrechner. Das `.deb`
   zieht es als Abhängigkeit, das `.AppImage` bringt es mit.
 * **Nicht nativ.** Die Oberfläche sieht aus wie eine gute Webseite, nicht wie

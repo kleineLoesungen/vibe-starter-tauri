@@ -11,8 +11,12 @@ diesem Projekt gilt und wo die Fallstricke liegen.
 Rust mit drei Kisten in einem Arbeitsbereich — `core` (Fachlogik, SQLite
 eingebettet), `cli` (clap) und `desktop` (**Tauri 2**) — plus eine
 Weboberfläche in `ui/` (**React 19, TypeScript, Vite**), die im Webview des
-Betriebssystems läuft. Ziel: **macOS und Linux**. Browserpakete wie
+Betriebssystems läuft. Ziel: **macOS, Linux und Windows**. Browserpakete wie
 **mermaid**, marked oder DOMPurify kommen über npm ins Bündel.
+
+**Eine Plattform-Fallunterscheidung gibt es im Rust-Code nicht — kein einziges
+`#[cfg(target_os = …)]`.** Das ist kein Zufall, sondern von
+`crates/core/tests/layering.rs` bewacht. Siehe „Drei Systeme, ein Codepfad".
 
 ---
 
@@ -28,6 +32,9 @@ ui/src/components/ Zeichnen nur. Props rein, Rückrufe raus.
 ui/src/lib/        Reine Hilfsfunktionen: Markdown, Mermaid, Datum, Farbschema.
 ui/src/bindings.ts ERZEUGT aus Rust-Typen. Nie von Hand ändern → `just bindings`.
 ui/src/theme.css   Die EINZIGE Datei mit Farben.
+scripts/tasks.mjs  Alles, was im Justfile keine schlichte Zeile wäre.
+.claude/agents/    Die drei Prüf-Agents. Laufen in der CI auf jedem PR.
+.github/workflows/ Bau auf drei Systemen, Entwicklung über Issues.
 ```
 
 Es gibt **kein `src-tauri/`**. Die Tauri-Schale liegt in `crates/desktop`,
@@ -45,8 +52,8 @@ Nur dort. npm-Versionen stehen **exakt** (ohne `^`) in `package.json`.
 |---|---|---|
 | **tauri** / **@tauri-apps/api** / **@tauri-apps/cli** | **2.11** | Rust-Kiste und npm-Pakete müssen in derselben Nebenversion bleiben, sonst meldet `tauri dev` „version mismatch". Plugins (`tauri-plugin-opener` ↔ `@tauri-apps/plugin-opener`) ebenso paarweise. |
 | **ts-rs** | **12** | Erzeugt `ui/src/bindings.ts`. Die API hat sich zwischen 10, 11 und 12 geändert (`Config`-Argument). |
-| **mermaid** | **12** | Lädt nach (`import("mermaid")`). Die alte `mermaid.init()`/`contentLoaded`-API existiert nicht mehr — `parse` und `render` benutzen. |
-| **lodash-es** (overrides) | **4.18.1** | Mermaid 12 zieht über chevrotain eine verwundbare Fassung herein. Der Eintrag unter `overrides` in `package.json` hebt sie an. Erst entfernen, wenn `npm audit` ohne ihn sauber ist. |
+| **mermaid** | **12.2** | Lädt nach (`import("mermaid")`). Die alte `mermaid.init()`/`contentLoaded`-API existiert nicht mehr — `parse` und `render` benutzen. |
+| **DOMPurify** | **3.4.17** | Darunter liegen gemeldete XSS-Lücken. Diese Kiste ist die einzige Bereinigung zwischen Benutzertext und Webview — hier ist „alte Fassung" kein Schönheitsfehler. |
 | **React** | **19** | `ReactDOM.render` gibt es nicht mehr — `createRoot`. |
 | **TypeScript** | **7** | Der native Compiler. `tsc --noEmit` prüft nur, gebaut wird von Vite. |
 | **Vite** / **Vitest** | **8** / **5** | Test-Einstellungen stehen in `vite.config.ts` unter `test`. |
@@ -139,6 +146,57 @@ ls crates/desktop/gen/schemas/          # alle Berechtigungen, nach dem ersten B
 
 ---
 
+## Drei Systeme, ein Codepfad
+
+Das Kit zielt auf macOS, Linux und Windows — entwickelt wird fast nur auf
+macOS. Ein Unterschied, der nur auf Windows auffällt, fällt deshalb **niemandem**
+auf. Die Regel ist darum nicht „Windows mitdenken", sondern
+**Unterschiede gar nicht erst einbauen**.
+
+### Keine Plattform-Fallunterscheidung im Rust-Code
+
+`crates/core/tests/layering.rs` schlägt fehl, sobald irgendwo `cfg(target_os …)`,
+`cfg(windows)`, `cfg(unix)` oder `target_family` auftaucht. Es gibt fast immer
+einen Weg ohne — und der ist obendrein kürzer:
+
+| Statt selbst zu unterscheiden | frag das, was es ohnehin weiß |
+|---|---|
+| `#[cfg(target_os)]` für Datenverzeichnisse | `directories` (siehe `paths.rs`) |
+| Die Adresse der eigenen Oberfläche festnageln | `window.url()` (siehe `ipc_contract.rs`) |
+| Pfade mit `/` vergleichen | einmal `to_slash()`, dann plattformblind |
+
+Wer wirklich eine braucht, trägt die Datei in `PLATTFORM_AUSNAHMEN` ein **und
+schreibt dazu, warum**. Dann steht die Ausnahme an einer Stelle, statt verstreut
+im Quelltext.
+
+Der einzige Windows-Sonderfall im ganzen Kit ist `windows_subsystem` in
+`crates/desktop/src/main.rs` — und der hängt an `debug_assertions`, nicht am
+Betriebssystem.
+
+### Kein Bash in der Werkzeugkette
+
+`just` ruft seine Rezepte über eine Shell auf, und die ist auf Windows `cmd.exe`
+(`set windows-shell` im Justfile). Deshalb gilt:
+
+**Jedes Rezept im Justfile ist ein schlichter Befehl.** Keine Pipes, kein
+`rm -rf`, kein `VAR=x befehl`, kein `&&`. Alles, was mehr braucht, steht in
+`scripts/tasks.mjs` — Node ist hier ohnehin Pflicht (npm, Vite, Biome), und
+dieselbe Datei läuft auf allen drei Systemen.
+
+```
+just clean          →  node scripts/tasks.mjs clean
+just sandbox …      →  node scripts/tasks.mjs sandbox …
+```
+
+**Windows braucht damit kein Git Bash.** Wer ein neues Rezept schreibt, prüft:
+Ist es ein einzelner Programmaufruf? Wenn nein — nach `scripts/tasks.mjs`.
+
+In den Node-Skripten gilt dasselbe Anliegen: `npm` und `npx` sind auf Windows
+Batch-Dateien und brauchen `shell: true`, `cargo` nicht. Das steht einmal in
+`BRAUCHT_SHELL` und sonst nirgends.
+
+---
+
 ## Sprache im Code
 
 * **Bezeichner englisch** — Typen, Funktionen, Felder, Tabellen, Befehle,
@@ -169,7 +227,9 @@ ui/src/components/  →  zeichnet nur. Sieht api nicht.
   `invoke(` steht,
 * eine Komponente `api` importiert oder `innerHTML` setzt,
 * irgendwo `dangerouslySetInnerHTML` oder ein CDN auftaucht,
-* außerhalb von `theme.css` eine Hexfarbe oder `rgb(` steht.
+* außerhalb von `theme.css` eine Hexfarbe oder `rgb(` steht,
+* **irgendwo im Rust-Code eine Plattform-Fallunterscheidung** steht
+  (`cfg(target_os …)`, `cfg(windows)`, `cfg(unix)` — siehe unten).
 
 Den Code verschieben, nicht den Test lockern.
 
@@ -253,9 +313,11 @@ Namen werden nie umbenannt, nur ergänzt.
   Tests suchen danach (`getByRole("button", { name: "Speichern" })`), und ein
   Bildschirmleser ebenso. Zwei gleichnamige Knöpfe gleichzeitig sind für
   beide mehrdeutig — deshalb „Endgültig löschen" in der Rückfrage.
-* **Zielbrowser ist WebKit** — Safari auf macOS, WebKitGTK auf Linux. Kein
-  Chrome. APIs, die nur Chromium kann (File System Access, Web Serial, …),
-  gibt es nicht. Im Zweifel auf caniuse.com unter „Safari" nachsehen.
+* **Zwei Engines, und die ältere gibt das Maß vor.** macOS und Linux zeichnen
+  mit WebKit (Safari bzw. WebKitGTK), Windows mit **WebView2 — das ist
+  Chromium**. Was in Chrome läuft, läuft deshalb noch lange nicht überall.
+  **Im Zweifel auf caniuse.com unter „Safari" nachsehen, nicht unter Chrome.**
+  WebKitGTK hinkt Safari obendrein oft eine Ausgabe hinterher.
 
 ---
 
@@ -275,6 +337,12 @@ nie einen zufälligen Treffer.
 * `STARTER_DATA_DIR` und `STARTER_CONFIG_DIR` überschreiben die Verzeichnisse
   — für CLI **und** Desktop (`just dev-sandbox`, `just sandbox`). In
   Rust-Tests stattdessen `Paths::under(tempdir)`.
+* Wo die Dateien landen, entscheidet `directories`, nicht das Kit:
+
+  | | macOS | Linux | Windows |
+  |---|---|---|---|
+  | Daten | `~/Library/Application Support/starter` | `~/.local/share/starter` | `%APPDATA%\starter\data` |
+  | Konfig | dasselbe Verzeichnis | `~/.config/starter` | `%APPDATA%\starter\config` |
 * **Gespeichert wird in UTC**, als RFC-3339-Text.
 * **Eine veröffentlichte Migration wird nie geändert.** Neue Datei, nächste
   Nummer, in `crates/core/src/db.rs` eintragen.
@@ -303,6 +371,8 @@ Bitte nicht „nachrüsten":
 | `dangerouslySetInnerHTML` | `lib/markdown.ts` | Bereinigung an einer Stelle |
 | Auto-Update-Plugin | Release auf GitHub | Braucht Signaturschlüssel und Server |
 | `unsafe` | — | `unsafe_code = "forbid"` im Arbeitsbereich |
+| Bash-Skripte, `rm -rf` im Justfile | `scripts/tasks.mjs` | Auf Windows läuft `cmd.exe`, nicht `sh` |
+| `#[cfg(target_os = …)]` | `directories`, `window.url()` | Ein Unterschied, den niemand auf macOS sieht, ist ein Fehler für später |
 
 ---
 
@@ -312,7 +382,7 @@ Bitte nicht „nachrüsten":
 |---|---|
 | `crates/core/tests/note.rs` | Die fachlichen Regeln. **Hier liegt der Schwerpunkt.** |
 | `crates/core/tests/config.rs` | Einstellungen lesen, schreiben, ablehnen |
-| `crates/core/tests/layering.rs` | Der Schichtwächter — Rust **und** TypeScript |
+| `crates/core/tests/layering.rs` | Der Schichtwächter — Rust **und** TypeScript, dazu der Plattform-Wächter |
 | `crates/cli/tests/cli.rs` | Ausgabeformat, Rückgabewerte, Schnappschüsse |
 | `crates/desktop/tests/ipc_contract.rs` | Befehle über `tauri::test` ohne Fenster; Befehlsliste Rust ↔ api.ts |
 | `crates/desktop/tests/bindings.rs` | `ui/src/bindings.ts` ist aktuell |

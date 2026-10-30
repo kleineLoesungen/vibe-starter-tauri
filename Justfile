@@ -1,11 +1,15 @@
 # Alle wiederkehrenden Handgriffe an einem Ort.
 # `just` ohne Argument zeigt die Liste.
 #
-# Installation von just:  cargo install just   (oder brew install just)
-
-# Absolute Pfade für das Wegwerfverzeichnis: `tauri dev` startet die Anwendung
-# aus crates/desktop heraus, ein relativer Pfad landete dort.
-local := justfile_directory() / ".local"
+# Installation von just:  brew install just   ·   winget install Casey.Just
+#                         cargo install just
+#
+# JEDES REZEPT IST EIN SCHLICHTER BEFEHL. Keine Pipes, kein `rm -rf`, kein
+# `VAR=x befehl`, kein `&&`. Der Grund steht eine Zeile tiefer: Auf Windows
+# läuft hier `cmd.exe`, auf macOS und Linux `sh`. Alles, was mehr braucht als
+# einen Programmaufruf, steht in scripts/tasks.mjs — eine Datei, die überall
+# dieselbe ist. Node ist in diesem Kit ohnehin Pflicht.
+set windows-shell := ["cmd.exe", "/c"]
 
 _default:
     @just --list --unsorted
@@ -16,10 +20,9 @@ _default:
 setup:
     rustup show
     npm ci
-    cargo install --locked cargo-deny cargo-insta || true
+    cargo install --locked cargo-deny cargo-insta
     npm run build:ui
     cargo build
-    @echo ""
     @echo "Fertig. Weiter mit:  just dev   oder   just cli note list"
 
 # --- Entwicklung -----------------------------------------------------------
@@ -31,7 +34,7 @@ dev:
 
 # Wie `just dev`, aber auf .local/ statt auf den echten Daten.
 dev-sandbox:
-    STARTER_DATA_DIR={{local}}/data STARTER_CONFIG_DIR={{local}}/config npm run tauri dev
+    node scripts/tasks.mjs dev-sandbox
 
 # Die Kommandozeile aufrufen:  just cli note add "Titel"
 cli *ARGS:
@@ -39,19 +42,16 @@ cli *ARGS:
 
 # Wie `just cli`, aber auf .local/ — dieselben Daten wie `just dev-sandbox`.
 sandbox *ARGS:
-    STARTER_DATA_DIR={{local}}/data STARTER_CONFIG_DIR={{local}}/config \
-        cargo run -q -p starter-cli -- {{ARGS}}
+    node scripts/tasks.mjs sandbox {{ARGS}}
 
 # TypeScript-Typen aus den Rust-Typen neu erzeugen (ui/src/bindings.ts).
 bindings:
-    STARTER_UPDATE_BINDINGS=1 cargo test -q -p starter-desktop --test bindings
-    @echo "ui/src/bindings.ts geschrieben. Weiter mit:  npm run build:ui"
+    node scripts/tasks.mjs bindings
 
 # --- Prüfen ----------------------------------------------------------------
 
 # Der Torwächter. Muss grün sein, bevor etwas committet wird.
 check: fmt-check lint test deny
-    @echo ""
     @echo "Alles grün."
 
 # Formatieren: Rust und TypeScript.
@@ -90,33 +90,33 @@ dupes:
 
 # --- Ausliefern ------------------------------------------------------------
 
-# Bündel für diesen Rechner: .app + .dmg auf macOS, .deb + .AppImage auf Linux.
+# Bündel für diesen Rechner.
+#   macOS    .app + .dmg
+#   Linux    .deb + .AppImage
+#   Windows  .msi + -setup.exe
 bundle:
     npm run tauri build
 
 # macOS: ein Bündel für Apple Silicon und Intel.
+# Die Ziele stehen nicht in rust-toolchain.toml — sonst lüde jeder Linux- und
+# Windows-Rechner zwei Apple-Bibliotheken herunter, die er nie benutzt.
 bundle-macos-universal:
+    rustup target add aarch64-apple-darwin x86_64-apple-darwin
     npm run tauri build -- --target universal-apple-darwin
 
-# Kommandozeile mit Handbuch und Vervollständigungen: dist/starter-cli-<version>-<os>-<arch>.tar.gz
+# Kommandozeile mit Handbuch und Vervollständigungen als dist/*.tar.gz
 package-cli:
-    ./scripts/package-cli.sh
+    node scripts/package-cli.mjs
 
 # Symbole aus assets/icon.png neu erzeugen (1024×1024, quadratisch).
 icons:
-    npx tauri icon assets/icon.png -o crates/desktop/icons
-    cd crates/desktop/icons && rm -rf android ios Square*.png StoreLogo.png icon.ico 64x64.png
+    node scripts/tasks.mjs icons
 
 # --- Aufräumen -------------------------------------------------------------
 
 clean:
-    cargo clean
-    rm -rf dist .local ui/dist
+    node scripts/tasks.mjs clean
 
 # ACHTUNG: löscht die echten lokalen Daten dieser Anwendung.
 data-reset:
-    @echo "Löscht das Datenverzeichnis:"
-    @cargo run -q -p starter-cli -- paths
-    @printf "Wirklich? [j/N] " && read a && [ "$a" = "j" ]
-    rm -rf "$(cargo run -q -p starter-cli -- paths --json | sed -n 's/.*"data_dir": "\(.*\)".*/\1/p')"
-    @echo "Gelöscht."
+    node scripts/tasks.mjs data-reset

@@ -59,10 +59,13 @@ impl Ctx {
                 cmd: cmd.into(),
                 callback: CallbackFn(0),
                 error: CallbackFn(1),
-                // So heißt die eigene Oberfläche auf macOS und Linux. Eine
-                // andere Adresse gilt als fremde Seite, und Tauri verweigert
-                // ihr jeden Befehl.
-                url: "tauri://localhost".parse().unwrap(),
+                // Die Adresse der eigenen Oberfläche — vom Fenster erfragt,
+                // nicht hingeschrieben. Sie lautet auf Windows anders als auf
+                // macOS und Linux (`http://tauri.localhost` statt
+                // `tauri://localhost`), und unter einer fremden Adresse
+                // verweigert Tauri jeden Befehl. Wer sie hier festnagelt, baut
+                // einen Test, der auf genau einer Plattform läuft.
+                url: self.window.url().expect("Adresse des Fensters"),
                 body: InvokeBody::Json(args),
                 headers: Default::default(),
                 invoke_key: INVOKE_KEY.to_string(),

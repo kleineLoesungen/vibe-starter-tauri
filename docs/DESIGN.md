@@ -105,9 +105,14 @@ Rand, wo das System eine Maske anlegt.
 just icons
 ```
 
-Das erzeugt `crates/desktop/icons/` (`icon.icns` für macOS, PNGs für Linux).
-**Die Ergebnisse liegen mit im Verwaltungssystem.** Die Farbe im Symbol ist
-dieselbe wie die Voreinstellung von `accent`.
+Das erzeugt `crates/desktop/icons/`: `icon.icns` für macOS, `icon.ico` für
+Windows, PNGs für Linux. **Die Ergebnisse liegen mit im Verwaltungssystem** —
+ein Bau auf einem System, das die anderen Formate nicht erzeugen kann, braucht
+sie trotzdem.
+
+`tauri icon` legt daneben noch Symbole für Android, iOS und den Microsoft Store
+an. Die wirft `scripts/tasks.mjs` wieder weg; dieses Kit liefert nichts davon
+aus. Die Farbe im Symbol ist dieselbe wie die Voreinstellung von `accent`.
 
 ## Bedienelemente brauchen Namen
 
