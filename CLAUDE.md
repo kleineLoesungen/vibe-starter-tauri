@@ -420,10 +420,17 @@ just check
 Das ist `cargo fmt --check`, Clippy, Biome, `tsc`, alle Rust- und
 Vitest-Tests, `cargo deny` und `npm audit`. Warnungen sind Fehler.
 
-`npm audit` läuft **ohne** `--omit=dev`. Entwicklungswerkzeuge landen nicht
-im Bündel, aber `just dev` startet den Vite-Server auf dem eigenen Rechner —
-eine Lücke darin trifft den, der am Projekt arbeitet. Wer das Rauschen nicht
-erträgt, hebt `--audit-level`, statt die halbe Liste auszublenden.
+Zwei Einstellungen darin sind bewusst so und schon einmal teuer gewesen:
+
+* **`npm audit` ohne `--omit=dev`.** Entwicklungswerkzeuge landen nicht im
+  Bündel, aber `just dev` startet den Vite-Server auf dem eigenen Rechner —
+  eine Lücke darin trifft den, der am Projekt arbeitet. Genau so eine ist hier
+  schon durchgerutscht. Wer das Rauschen nicht erträgt, hebt `--audit-level`,
+  statt die halbe Liste auszublenden.
+* **`unsound = "workspace"` in `deny.toml`.** Unsoundness in den eigenen
+  Abhängigkeiten bricht den Bau, tiefer im Baum nicht — dort stecken zwei, die
+  sich von hier aus nicht auflösen lassen. Echte Sicherheitslücken brechen den
+  Bau **immer**, auch transitiv.
 
 ### Wenn du aus einem Issue heraus arbeitest
 

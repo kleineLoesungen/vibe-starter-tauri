@@ -5,6 +5,15 @@
 # Eine Kiste ohne Betreuer ist kein Grund, den Bau abzubrechen — aber einer,
 # es zu wissen.
 unmaintained = "workspace"
+# Unsoundness in den EIGENEN Abhängigkeiten bricht den Bau. Tiefer im Baum
+# bewusst nicht: Dort stecken heute zwei (glib über Tauris GTK-Stack unter
+# Linux, tokio über AsyncFd), die sich von hier aus nicht auflösen lassen.
+# Auf "all" zu stellen hieße, zwei dauerhafte Ausnahmen einzutragen, die
+# niemand je wieder ansieht — das erzieht zum gedankenlosen Ignorieren.
+#
+# Beides sind Unsoundness-Meldungen, keine ausnutzbaren Lücken. Echte
+# Sicherheitslücken brechen den Bau IMMER, auch transitiv.
+unsound = "workspace"
 yanked = "deny"
 
 [licenses]
