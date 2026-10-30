@@ -200,6 +200,8 @@ auf.
 | Lauf grün, aber Claude hat nichts getan | Kein Token hinterlegt. Im Lauf steht ein Hinweis „übersprungen" |
 | `Claude Code is not installed on this repository` | Die GitHub-App fehlt — Schritt 1. Der Token ist in Ordnung |
 | `Claude execution failed: result is_error:true`, Abbruch nach ~2 s, `total_cost_usd: 0` | Der Token wird abgelehnt. 401 oder 429 — siehe unten |
+| `Not logged in · Please run /login` (nur mit `CLAUDE_DEBUG` sichtbar) | Dasselbe von innen: Die Claude-CLI im Runner bekommt keine **gültigen** Zugangsdaten. Fast immer das Secret, nicht der Aufbau |
+| `@claude` löst **gar nichts** aus, unter *Actions* steht ein roter Lauf `.github/workflows/…` | Ungültiges YAML — oft Konfliktmarker aus einem `cherry-pick`. GitHub führt solche Workflows stillschweigend nicht aus. Siehe README, „Spätere Verbesserungen aus dem Kit holen" |
 | PR da, aber keine Haken und keine Kommentare | Der Freigabe-Tipp fehlt noch (siehe oben) |
 | `durchsicht` übersprungen | PR ist ein Entwurf oder kommt aus einem Fork |
 | `check` rot nur auf Windows | Genau der Fall, für den die Matrix da ist. `crates/core/tests/layering.rs` nennt die üblichen Ursachen |
@@ -225,6 +227,19 @@ verlangen:
 |---|---|
 | **401** | Der Token ist ungültig, abgelaufen oder beim Einfügen beschädigt → neu erzeugen |
 | **429** | Das Abo-Kontingent ist erschöpft → ein neuer Token ändert **nichts**, nur Warten oder ein API-Schlüssel hilft |
+
+Mit eingeschaltetem `CLAUDE_DEBUG` lautet dieselbe Lage von innen:
+
+```json
+"api_error_status": 401,
+"result": "Not logged in · Please run /login"
+```
+
+Das klingt nach einem fehlenden Login, heißt aber schlicht: **Der Dienst hat
+die mitgeschickten Zugangsdaten abgelehnt.** Die CLI unterscheidet nicht
+zwischen „kein Token" und „Token abgelehnt" — beides endet in derselben
+Meldung. Deshalb ist sie kein Hinweis auf einen Fehler im Aufbau, sondern auf
+das Secret.
 
 **Häufigster Fall ist ein Leerzeichen.** Beim Kopieren rutscht leicht eines
 mit, und im Secret-Feld sieht man es nicht. Die Workflows prüfen das
