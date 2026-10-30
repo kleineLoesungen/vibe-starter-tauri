@@ -170,6 +170,7 @@ was auch lokal grün sein muss.
 | `check.yml` | Push nach `main`, jeder PR | `just fmt-check lint test` auf macOS, Linux und Windows; `just deny` einmal auf Linux |
 | `durchsicht.yml` *(`claude-review.yml`)* | jeder PR | die drei Agents |
 | `claude-issue.yml` | Issue und Issue-Kommentar vom Inhaber mit `@claude` | Umsetzung, PR |
+| `token-pruefen.yml` | von Hand | Sagt, ob der Token im Secret trägt |
 | `release.yml` | Tag `v*` | Bündel für alle drei Systeme als Release-**Entwurf** |
 
 `check.yml` ist das Sicherheitsnetz für Windows und Linux: Entwickelt wird auf
@@ -229,6 +230,24 @@ verlangen:
 mit, und im Secret-Feld sieht man es nicht. Die Workflows prüfen das
 inzwischen selbst und brechen mit Klartext ab, statt dich die zwei Sekunden
 deuten zu lassen.
+
+#### Den Token im Secret prüfen lassen
+
+Statt zu raten: **Actions → „token prüfen" → Run workflow.**
+
+Der Lauf nimmt den Token aus dem Secret — also genau den, den auch die
+Action benutzt — und sagt in Klartext, was der Dienst dazu meint:
+
+| Ausgabe | Bedeutung |
+|---|---|
+| *Kein Token* | Das Secret fehlt. Schritt 3 |
+| *Token beschädigt* | Leerzeichen oder Zeilenumbruch. Neu einfügen |
+| *401 — Token abgelehnt* | Ungültig oder abgelaufen. `claude setup-token`, Secret ersetzen |
+| *429 — Kontingent erschöpft* | Ein **neuer** Token ändert nichts |
+| *Token in Ordnung* | Scheitert Claude trotzdem, liegt es nicht am Token |
+
+Der Token wird dabei nie ausgegeben, nur seine Länge und die Antwort des
+Dienstes. Den Lauf kann nur der Repo-Inhaber starten.
 
 Wer das verwechselt, erzeugt im zweiten Fall endlos neue Token, die alle
 dasselbe tun. Deshalb erst fragen, dann handeln — **am eigenen Rechner**, der
