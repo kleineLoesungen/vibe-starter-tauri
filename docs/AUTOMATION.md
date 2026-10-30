@@ -227,7 +227,18 @@ verlangen:
 
 Wer das verwechselt, erzeugt im zweiten Fall endlos neue Token, die alle
 dasselbe tun. Deshalb erst fragen, dann handeln — **am eigenen Rechner**, der
-Token gehört nirgendwo anders hin:
+Token gehört nirgendwo anders hin.
+
+Zuerst prüfen, dass die Variable überhaupt gefüllt ist. Ein leeres
+`Bearer ` ergibt nämlich ebenfalls 401, und man misst den eigenen
+Tippfehler statt des Fehlers:
+
+```bash
+export CLAUDE_CODE_OAUTH_TOKEN='…'
+echo ${#CLAUDE_CODE_OAUTH_TOKEN}      # muss eine dreistellige Zahl sein, nicht 0
+```
+
+Dann erst:
 
 ```bash
 curl -s -D- -o /dev/null https://api.anthropic.com/v1/messages \
