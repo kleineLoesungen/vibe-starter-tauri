@@ -56,9 +56,16 @@ jobs:
 
       - run: npm ci
 
-      # Genau die Rezepte, die auch lokal laufen. `deny` fehlt hier mit
-      # Absicht — siehe den Job darunter.
-      - run: just fmt-check lint test
+      # Genau die Rezepte, die auch lokal `just check` ausmachen — aber
+      # einzeln, damit in der Übersicht schon am Namen steht, was gestolpert
+      # ist. Auf dem Telefon spart das Aufklappen eines Protokolls.
+      # `deny` fehlt hier mit Absicht — siehe den Job darunter.
+      - name: Formatierung
+        run: just fmt-check
+      - name: Clippy, Biome, tsc
+        run: just lint
+      - name: Tests
+        run: just test
 
   # Lizenzen und bekannte Lücken hängen nicht am Betriebssystem. Einmal
   # genügt; dreimal wäre nur dreimal dieselbe Antwort.

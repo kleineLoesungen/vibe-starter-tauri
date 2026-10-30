@@ -30,8 +30,15 @@ const FILTERS: &[(&str, &str)] = &[
     (r"\b[0-9a-f]{8}\b", "[id]"),
     (r"\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}", "[datum]"),
     (r"\d{4}-\d{2}-\d{2}T[0-9:.]+Z", "[zeit]"),
-    // Wegwerfverzeichnisse heißen bei jedem Lauf anders.
-    (r#"/[^\s"]*/starter-test-[^\s"]*"#, "[tmp]"),
+    // Wegwerfverzeichnisse heißen bei jedem Lauf anders — auf Windows mit
+    // Backslashes und Laufwerksbuchstaben.
+    (r#"[/\\][^\s"]*[/\\]starter-test-[^\s"]*"#, "[tmp]"),
+    // Auf Windows heißt die Datei `starter.exe`, und clap nimmt die Zeile
+    // „Usage:" aus argv[0] — nicht aus `#[command(name = ...)]`. Das ist
+    // kein Unterschied im Verhalten, nur im Dateinamen. Ohne diese Zeile
+    // gölte jeder Schnappschuss mit Hilfetext nur auf zwei von drei
+    // Systemen.
+    (r"starter\.exe", "starter"),
 ];
 
 struct Ctx {
