@@ -30,15 +30,30 @@ will.
 
 ## Einrichtung
 
-Ohne diesen Schritt tut `@claude` nichts — die Workflows überspringen sich
-dann stillschweigend und hinterlassen einen Hinweis im Lauf statt eines
-roten Hakens.
+**Zwei Dinge werden gebraucht, nicht eines:** die Claude-GitHub-App auf dem
+Repository **und** den Token als Secret. Fehlt der Token, überspringen sich
+die Workflows stillschweigend. Fehlt die App, laufen sie an und scheitern
+mit `Claude Code is not installed on this repository` — die Inhaber-Sperre
+und das Auslösewort greifen also schon, nur der Token-Tausch nicht.
 
-**Das Kit selbst hat bewusst keinen Token hinterlegt.** Ein Secret gehört in
-ein Projekt, nicht in eine Vorlage. Die Schritte unten macht man einmal je
+**Das Kit selbst hat bewusst keines von beidem.** Ein Secret gehört in ein
+Projekt, nicht in eine Vorlage. Die Schritte unten macht man einmal je
 abgeleitetem Projekt.
 
-### 1. Token erzeugen
+### 1. Die Claude-GitHub-App installieren
+
+<https://github.com/apps/claude> → **Install** → dein Konto → **Only select
+repositories** → das Projekt auswählen.
+
+Du musst Verwalter des Repositorys sein. Die App liefert die Berechtigung,
+mit der die Action ihren OIDC-Token gegen einen Zugriffstoken tauscht; ohne
+sie nützt auch ein gültiges Abo-Token nichts.
+
+*(Wer die offizielle App nicht will, kann eine eigene GitHub-App anlegen und
+sie über den Eingabewert `github_token` einhängen — mehr Arbeit, dafür
+niemand Drittes mit Zugriff.)*
+
+### 2. Token erzeugen
 
 An einem Rechner mit der Claude-CLI, einmal überhaupt:
 
@@ -51,7 +66,7 @@ Repository — **derselbe Token passt in alle deine Projekte**. Kopiere ihn
 beim Erzeugen gleich weg; ob er später noch einmal abrufbar ist, verlass dich
 nicht darauf.
 
-### 2. Als Secret hinterlegen
+### 3. Als Secret hinterlegen
 
 *Settings → Secrets and variables → Actions → New repository secret*
 
@@ -63,7 +78,7 @@ nicht darauf.
 Das geht auch im Browser auf dem Telefon — den Token aus dem Passwortspeicher
 einfügen.
 
-### 3. Probe
+### 4. Probe
 
 Ein Issue anlegen: *„@claude trage in die README eine Zeile ein, dass dieses
 Projekt aus dem Kit stammt."* Innerhalb einer Minute sollte ein Lauf unter
@@ -182,6 +197,7 @@ auf.
 | Gar kein Lauf nach `@claude` | Kommentar nicht vom Repo-Inhaber, oder `@claude` fehlt |
 | Gar kein Lauf, obwohl du der Inhaber bist | Liegt das Repository unter einer **Organisation**? Dann ist `github.repository_owner` deren Name und nie dein Benutzername. In `claude-issue.yml` den eigenen Namen eintragen — der Kommentar dort sagt, wo |
 | Lauf grün, aber Claude hat nichts getan | Kein Token hinterlegt. Im Lauf steht ein Hinweis „übersprungen" |
+| `Claude Code is not installed on this repository` | Die GitHub-App fehlt — Schritt 1. Der Token ist in Ordnung |
 | Lauf scheitert an der Anmeldung | Token abgelaufen oder falsch eingefügt — neu mit `claude setup-token` |
 | PR da, aber keine Haken und keine Kommentare | Der Freigabe-Tipp fehlt noch (siehe oben) |
 | `durchsicht` übersprungen | PR ist ein Entwurf oder kommt aus einem Fork |
@@ -194,9 +210,10 @@ auf.
 `node scripts/new-project.mjs` nimmt `.github/` und `.claude/` mit — das neue
 Projekt hat alles sofort.
 
-**Was es nicht mitnimmt, ist der Token.** Der hängt am Abo einer Person und
-hat in einer Vorlage nichts zu suchen. Jedes Projekt braucht seinen eigenen
-Eintrag `CLAUDE_CODE_OAUTH_TOKEN` — Schritt 2 oben, mit demselben Token.
+**Was es nicht mitnimmt, sind App und Token.** Beide hängen an einem Konto
+und haben in einer Vorlage nichts zu suchen. Jedes Projekt braucht die
+GitHub-App (Schritt 1) und seinen eigenen Eintrag `CLAUDE_CODE_OAUTH_TOKEN`
+(Schritt 3, mit demselben Token).
 
 Bis dahin laufen die beiden Claude-Workflows ins Leere, aber sauber: Sie
 überspringen sich und schreiben einen Hinweis in den Lauf. Keine roten Haken
