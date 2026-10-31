@@ -74,6 +74,11 @@ const park = `@@SCHWESTER${"KIT@@"}`;
 
 const ersetzungen = [
   [/vibe-starter-desktop/g, park],
+  // Absichtlich ein Platzhalter: Eine eigene Domain kann das Skript nicht
+  // erraten. Eingetragen gehört sie VOR dem ersten Release — die Kennung steht
+  // in Info.plist, im UpgradeCode des MSI und im Registry-Schlüssel des
+  // NSIS-Installers. Später geändert, hält jeder Installer die neue Fassung
+  // für eine zweite Anwendung und legt sie daneben.
   [/de\.kleineloesungen\.starter/g, `de.example.${slug}`],
   [/STARTER_/g, `${upper}_`],
   [/starter_/g, `${underscore}_`],
@@ -168,6 +173,10 @@ console.log("  just check                      # muss grün sein");
 console.log("  just dev");
 console.log("\nassets/icon.png ist noch das Symbol des Kits — ersetzen (1024×1024)");
 console.log("und danach 'just icons' laufen lassen.");
+
+console.log(`\nDie Bündelkennung ist ein Platzhalter: de.example.${slug}`);
+console.log("Eigene Domain umgekehrt in crates/desktop/tauri.conf.json eintragen,");
+console.log("und zwar VOR dem ersten Release — danach gilt sie als andere App.");
 console.log("\nDamit Claude auf Issues antwortet, fehlen noch zwei Dinge:");
 console.log("  1. die GitHub-App  https://github.com/apps/claude  auf diesem Repo");
 console.log("  2. das Secret      CLAUDE_CODE_OAUTH_TOKEN");

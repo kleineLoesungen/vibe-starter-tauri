@@ -93,6 +93,13 @@ Umgebungsvariablen, Datenverzeichnis, Fenstertitel, `package.json`,
 noch „starter" und benutzt dasselbe Datenverzeichnis wie das Kit — zwei
 Projekte mit demselben Namen teilen sich unbemerkt eine Datenbank.
 
+**Eines bleibt ein Platzhalter: die Bündelkennung** (`de.example.<name>`) —
+eine eigene Domain kann das Skript nicht erraten. Sie gehört umgekehrt in
+`crates/desktop/tauri.conf.json`, und zwar **vor dem ersten Release**: Die
+Kennung steht in `Info.plist`, im `UpgradeCode` des MSI und im
+Registry-Schlüssel des NSIS-Installers. Später geändert, hält jeder Installer
+die neue Fassung für eine zweite Anwendung und legt sie daneben.
+
 ### Spätere Verbesserungen aus dem Kit holen
 
 ```bash

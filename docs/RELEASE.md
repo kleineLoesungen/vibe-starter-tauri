@@ -25,6 +25,23 @@ Die Fassung steht an genau einer Stelle: `version` unter `[workspace.package]`
 in der obersten `Cargo.toml`. Tauri liest sie aus `crates/desktop/Cargo.toml`,
 das sie erbt. `package.json` hat eine eigene Nummer, die niemand liest.
 
+## Vor dem ersten Release — zwei Erbstücke
+
+Ein aus dem Kit erzeugtes Projekt bringt beide mit, und beide fallen erst auf,
+wenn die Dateien schon gebaut sind:
+
+* **Die Bündelkennung.** `new-project.mjs` setzt `de.example.<name>` — eine
+  eigene Domain kann es nicht erraten. Sie steht in `Info.plist`, im
+  `UpgradeCode` des MSI und im Registry-Schlüssel des NSIS-Installers. **Jetzt**
+  in `crates/desktop/tauri.conf.json` eintragen: Nach dem ersten Release hält
+  jeder Installer eine neue Kennung für eine zweite Anwendung und legt sie
+  daneben. Das Datenverzeichnis hängt nicht daran, sondern an `APP_NAME` in
+  `crates/core/src/paths.rs` — die Änderung ist also folgenlos, solange sie
+  früh kommt.
+* **Die Fassungsnummer.** Sie ist die des letzten Kit-Releases, nicht die der
+  eigenen App. Die erste eigene ist `0.1.0`, und die Nummer steht in jedem
+  Dateinamen.
+
 ---
 
 ## macOS
